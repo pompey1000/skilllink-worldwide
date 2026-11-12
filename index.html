@@ -37,10 +37,19 @@ async function render(){
  if(ids.length){const r=await db.from('job_offers').select('id,job_id,provider_id,amount_cents,message,status').in('job_id',ids).order('amount_cents',{ascending:true});if(!r.error)offers=r.data||[];}
  el('joblist').innerHTML=(data||[]).length?data.map(j=>{
  const jobOffers=offers.filter(o=>o.job_id===j.id);
- const offersHtml=jobOffers.length?'<h4>Worker offers</h4>'+jobOffers.map(o=>'<div class="tile"><strong>$'+(Number(o.amount_cents)/100).toFixed(2)+'</strong> · '+safe(o.status)+'<p>'+safe(o.message||'No message')+'</p><small>Worker ID: '+safe(o.provider_id)+'</small></div>').join(''):'<p class="muted">No worker offers yet.</p>';
+ const offersHtml=jobOffers.length?'<h4>Worker offers</h4>'+jobOffers.map(o=>'<div class="tile"><strong>$'+(Number(o.amount_cents)/100).toFixed(2)+'</strong> · '+safe(o.status)+'<p>'+safe(o.message||'No message')+'</p><small>Worker ID: '+safe(o.provider_id)+'</small>'+(o.status==='proposed'&&!jobOffers.some(x=>x.status==='selected')?'<button class="btn" type="button" data-select-offer="'+safe(o.id)+'">Choose Worker</button>':'')+'</div>').join(''):'<p class="muted">No worker offers yet.</p>';
  return '<article class="job"><span class="tag">'+safe(j.category)+'</span><h3>'+safe(j.title)+'</h3><p>'+safe(j.description)+'</p><small>'+safe(j.city||'')+' · '+safe(j.status)+'</small><div class="actions">'+(j.status==='open'?'<button type="button" class="btn alt" data-publish-job="'+safe(j.id)+'" data-publish-value="'+(!j.is_published)+'">'+(j.is_published?'Unpublish Job':'Publish Job')+'</button>':'')+'</div><p class="muted">'+(j.is_published?'Visible to signed-in workers':'Private — not visible to workers')+'</p>'+offersHtml+'</article>';
  }).join(''):'<p class="muted">No saved requests yet.</p>';
 }
+el('joblist').addEventListener('click',async e=>{
+ const button=e.target.closest('[data-select-offer]');if(!button||!db||!activeUser)return;
+ if(!confirm('Choose this worker and decline other offers for this job? No payment will be charged.'))return;
+ button.disabled=true;
+ const {data,error}=await db.rpc('select_job_offer',{p_offer_id:button.dataset.selectOffer});
+ if(error||data!==true){alert('Could not choose worker: '+(error?.message||'Offer is no longer available.'));button.disabled=false;return;}
+ alert('Worker selected. No payment was charged.');
+ await render();
+});
 el('joblist').addEventListener('click',async e=>{
  const button=e.target.closest('[data-publish-job]');if(!button||!db||!activeUser)return;
  const publish=button.dataset.publishValue==='true';
