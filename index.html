@@ -28,7 +28,28 @@
 const key='skilllink-demo-requests-v1';const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const el=id=>document.getElementById(id);function go(t){setTab(t);el('start').scrollIntoView({behavior:'smooth'})}function pick(t){go('need');el('needtype').value=t}function setTab(t){el('needpanel').classList.toggle('hide',t!=='need');el('offerpanel').classList.toggle('hide',t!=='offer');el('needtab').className='btn'+(t==='need'?'':' alt');el('offertab').className='btn'+(t==='offer'?'':' alt');el('feedback').textContent=''}let db=null,activeUser=null;
 function feedback(message,ok=false){el('feedback').innerHTML='<div class="notice'+(ok?' success':'')+'">'+safe(message)+'</div>';}
 async function ensureProfile(role,name,city){const {data:existing,error:readError}=await db.from('profiles').select('id,role').eq('id',activeUser.id).maybeSingle();if(readError)throw readError;if(existing){if(existing.role!==role)throw new Error('This account is registered as a '+existing.role+'. Please use the matching form.');const {error}=await db.from('profiles').update({full_name:name,city}).eq('id',activeUser.id);if(error)throw error;}else{const {error}=await db.from('profiles').insert({id:activeUser.id,full_name:name,city,role});if(error)throw error;}}
-async function render(){if(!db||!activeUser){el('joblist').innerHTML='<p class="muted">Sign in to see your saved requests.</p>';return;}const {data,error}=await db.from('jobs').select('id,title,description,category,city,status,created_at').eq('customer_id',activeUser.id).order('created_at',{ascending:false}).limit(50);if(error){el('joblist').textContent='Could not load requests: '+error.message;return;}el('joblist').innerHTML=data.length?data.map(j=>'<article class="job"><span class="tag">'+safe(j.category)+'</span><h3>'+safe(j.title)+'</h3><p>'+safe(j.description)+'</p><small>'+safe(j.city||'')+' · '+safe(j.status)+'</small></article>').join(''):'<p class="muted">No saved requests yet.</p>';}
+async function render(){
+ if(!db||!activeUser){el('joblist').innerHTML='<p class="muted">Sign in to see your saved requests.</p>';return;}
+ const {data,error}=await db.from('jobs').select('id,title,description,category,city,status,created_at,is_published').eq('customer_id',activeUser.id).order('created_at',{ascending:false}).limit(50);
+ if(error){el('joblist').textContent='Job publishing needs database setup before it can be used: '+error.message;return;}
+ const ids=(data||[]).map(j=>j.id);
+ let offers=[];
+ if(ids.length){const r=await db.from('job_offers').select('id,job_id,provider_id,amount_cents,message,status').in('job_id',ids).order('amount_cents',{ascending:true});if(!r.error)offers=r.data||[];}
+ el('joblist').innerHTML=(data||[]).length?data.map(j=>{
+ const jobOffers=offers.filter(o=>o.job_id===j.id);
+ const offersHtml=jobOffers.length?'<h4>Worker offers</h4>'+jobOffers.map(o=>'<div class="tile"><strong>$'+(Number(o.amount_cents)/100).toFixed(2)+'</strong> · '+safe(o.status)+'<p>'+safe(o.message||'No message')+'</p><small>Worker ID: '+safe(o.provider_id)+'</small></div>').join(''):'<p class="muted">No worker offers yet.</p>';
+ return '<article class="job"><span class="tag">'+safe(j.category)+'</span><h3>'+safe(j.title)+'</h3><p>'+safe(j.description)+'</p><small>'+safe(j.city||'')+' · '+safe(j.status)+'</small><div class="actions">'+(j.status==='open'?'<button type="button" class="btn alt" data-publish-job="'+safe(j.id)+'" data-publish-value="'+(!j.is_published)+'">'+(j.is_published?'Unpublish Job':'Publish Job')+'</button>':'')+'</div><p class="muted">'+(j.is_published?'Visible to signed-in workers':'Private — not visible to workers')+'</p>'+offersHtml+'</article>';
+ }).join(''):'<p class="muted">No saved requests yet.</p>';
+}
+el('joblist').addEventListener('click',async e=>{
+ const button=e.target.closest('[data-publish-job]');if(!button||!db||!activeUser)return;
+ const publish=button.dataset.publishValue==='true';
+ if(publish&&!confirm('Publish this job description and city to signed-in workers? Do not include private contact information.'))return;
+ button.disabled=true;
+ const {error}=await db.from('jobs').update({is_published:publish}).eq('id',button.dataset.publishJob).eq('customer_id',activeUser.id).eq('status','open');
+ if(error)alert('Could not change publication: '+error.message);
+ await render();
+});
 el('joblist').addEventListener('click',async e=>{const btn=e.target.closest('button[data-cancel-job]');if(!btn||!db||!activeUser)return;if(!confirm('Cancel this service request?'))return;btn.disabled=true;const {error}=await db.from('jobs').update({status:'cancelled'}).eq('id',btn.dataset.cancelJob).eq('customer_id',activeUser.id).eq('status','open');if(error)alert('Could not cancel request: '+error.message);await render();});
 async function browseAvailableJobs(){
  const status=el('find-job-status'),target=el('find-job-results');
@@ -36,16 +57,27 @@ async function browseAvailableJobs(){
  status.textContent='Searching available requests…';
  const {data:profile,error:profileError}=await db.from('provider_profiles').select('user_id').eq('user_id',activeUser.id).maybeSingle();
  if(profileError||!profile){status.textContent='Create your worker profile under Offer a skill first.';target.innerHTML='';return;}
- let query=db.from('jobs').select('id,title,description,category,city,status,created_at').eq('status','open').neq('customer_id',activeUser.id).order('created_at',{ascending:false}).limit(50);
+ let query=db.from('jobs').select('id,title,description,category,city,status,created_at').eq('status','open').eq('is_published',true).neq('customer_id',activeUser.id).order('created_at',{ascending:false}).limit(50);
  const category=el('find-job-category').value,city=el('find-job-city').value.trim();
  if(category)query=query.eq('category',category);
  if(city)query=query.ilike('city','%'+city.replace(/[%_,]/g,'')+'%');
  const {data,error}=await query;
  if(error){status.textContent='Job browsing is not enabled for public requests yet. Customer requests remain private until access rules are configured.';target.innerHTML='';return;}
- status.textContent=(data||[]).length+' available request(s) found. Contact and application features are not active yet.';
+ status.textContent=(data||[]).length+' available job(s) found.';
  target.innerHTML=(data||[]).map(j=>'<article class="job"><span class="tag">'+safe(j.category)+'</span><h3>'+safe(j.title)+'</h3><p style="white-space:pre-wrap;overflow-wrap:anywhere">'+safe(j.description)+'</p><small>'+safe(j.city||'')+'</small></article>').join('')||'<p class="muted">No available jobs match your search yet. Customers’ private saved requests are not listed here.</p>';
 }
 el('find-job-search').addEventListener('click',browseAvailableJobs);
+el('find-job-results').addEventListener('submit',async e=>{
+ const form=e.target.closest('form[data-job-offer]');if(!form)return;e.preventDefault();
+ const amount=Math.round(Number(form.elements.price.value)*100),message=form.elements.message.value.trim();
+ if(!Number.isSafeInteger(amount)||amount<100||amount>100000000){el('find-job-status').textContent='Enter a valid price.';return;}
+ if(!confirm('Send this price offer to the customer? No payment will be collected.'))return;
+ const button=form.querySelector('button[type="submit"]');button.disabled=true;
+ const {error}=await db.from('job_offers').insert({job_id:form.dataset.jobOffer,provider_id:activeUser.id,amount_cents:amount,message});
+ el('find-job-status').textContent=error?'Offer not sent: '+error.message:'Offer sent. The customer can compare your price with other offers.';
+ if(error)button.disabled=false;else form.reset();
+});
+
 el('needform').addEventListener('submit',async e=>{e.preventDefault();if(!db||!activeUser){feedback('Please sign in before saving a request.');el('account').scrollIntoView({behavior:'smooth'});return;}const name=el('needname').value.trim(),city=el('needcity').value.trim(),category=el('needtype').value,details=el('details').value.trim(),budget=el('budget').value;if(!name||!city||!details)return;const button=e.target.querySelector('button[type=submit]');button.disabled=true;try{await ensureProfile('customer',name,city);const description=details+(budget?'\\nApproximate budget: $'+budget:'');const {error}=await db.from('jobs').insert({customer_id:activeUser.id,title:category+' service request',description,category,city});if(error)throw error;e.target.reset();feedback('Request saved to your account. It is private and not yet sent to providers.',true);await render();el('jobs').scrollIntoView({behavior:'smooth'});}catch(err){feedback('Could not save request: '+err.message);}finally{button.disabled=false;}});
 el('offerform').addEventListener('submit',async e=>{e.preventDefault();if(!db||!activeUser){feedback('Please sign in before saving a worker profile.');el('account').scrollIntoView({behavior:'smooth'});return;}const name=el('workername').value.trim(),city=el('workercity').value.trim(),skill=el('workertype').value,rate=Number(el('rate').value),bio=el('bio').value.trim();if(!name||!city||!bio||!Number.isFinite(rate)||rate<0)return;const button=e.target.querySelector('button[type=submit]');button.disabled=true;try{await ensureProfile('provider',name,city);const {error}=await db.from('provider_profiles').upsert({user_id:activeUser.id,skill,description:bio,hourly_rate:rate,service_area:city,credential_type:el('credential-type').value,years_experience:el('years-experience').value===''?null:Number(el('years-experience').value)},{onConflict:'user_id'});if(error)throw error;feedback('Worker profile saved to Supabase. The public directory is still under development.',true);}catch(err){feedback('Could not save worker profile: '+err.message);}finally{button.disabled=false;}});
 let conversations=[],selectedConversation=null;
