@@ -26,4 +26,4 @@ jobs:
             echo "Missing SUPABASE_ACCESS_TOKEN repository secret"
             exit 1
           fi
-          supabase functions deploy approve-booking-quote --project-ref iiaskaknyfenglihfrpo
+          supabase functions deploy approve-booking-quote --project-ref iiaskaknyfenglihfrpo --yes
