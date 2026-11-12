@@ -101,12 +101,32 @@ Deno.serve(async (req) => {
       return respond(409, { error: "Invalid quote amount" });
     }
 
-    // Approval must be completed by a database transaction
-    // that rechecks booking and quote state atomically.
-    return respond(503, {
-      error: "Approval temporarily unavailable",
-      message: "Secure approval transaction not configured yet",
+    
+    const { data: approved, error: approvalError } =
+      await admin.rpc("approve_booking_quote", {
+        p_quote_id: quoteId,
+        p_customer_id: authData.user.id,
+      });
+
+    if (approvalError) {
+      console.error("Quote approval failed:", approvalError.message);
+      return respond(500, {
+        error: "Unable to approve quote",
+      });
+    }
+
+    if (approved !== true) {
+      return respond(409, {
+        error: "Quote cannot be approved in its current state",
+      });
+    }
+
+    return respond(200, {
+      success: true,
+      quote_id: quoteId,
+      status: "accepted",
     });
+
   } catch {
     return respond(500, { error: "Unable to process approval" });
   }
