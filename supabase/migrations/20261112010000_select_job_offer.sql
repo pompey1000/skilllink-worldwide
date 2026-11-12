@@ -22,7 +22,7 @@ begin
  if exists(select 1 from public.job_offers where job_id=v_job_id and status='selected') then return false; end if;
  update public.job_offers set status='declined' where job_id=v_job_id and status='proposed' and id<>p_offer_id;
  update public.job_offers set status='selected' where id=p_offer_id;
- update public.jobs set status='assigned',is_published=false where id=v_job_id;
+ update public.jobs set is_published=false where id=v_job_id;
  return true;
 end;
 $$;
