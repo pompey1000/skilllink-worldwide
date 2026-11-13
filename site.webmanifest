@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "Skill Link Worldwide",
+  "short_name": "Skill Link",
+  "description": "Find skilled help, offer your skills, and connect with local opportunities.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f8fb",
+  "theme_color": "#102c42",
+  "icons": [
+    {
+      "src": "/skilllink-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
