@@ -47,7 +47,7 @@ create policy "Employer updates own jobs" on public.job_posts for update to auth
 create policy "Applicant and employer see applications" on public.job_applications for select to authenticated
  using(applicant_id=(select auth.uid()) or exists(select 1 from public.job_posts j join public.employer_profiles e on e.id=j.employer_id where j.id=job_id and e.owner_id=(select auth.uid())));
 create policy "Applicants apply to published jobs" on public.job_applications for insert to authenticated
- with check(applicant_id=(select auth.uid()) and status='submitted' and resume_path is null and exists(select 1 from public.job_posts j where j.id=job_id and j.status='published'));
+ with check(applicant_id=(select auth.uid()) and status='submitted' and (resume_path is null or resume_path like (select auth.uid())::text || '/%') and exists(select 1 from public.job_posts j where j.id=job_id and j.status='published'));
 -- Keep application status and resume references server-managed until secure functions exist.
 -- No direct update policy for applications.
 -- Resume uploads require private Supabase Storage bucket + authenticated path policies.
