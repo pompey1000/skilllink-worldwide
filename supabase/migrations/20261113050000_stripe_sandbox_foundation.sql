@@ -15,6 +15,7 @@ create table if not exists public.booking_quotes (
  amount_cents bigint not null check (amount_cents > 0),
  currency text not null default 'usd' check (currency = 'usd'),
  version integer not null default 1 check (version > 0),
+ status text not null default 'proposed' check (status in ('proposed','accepted','withdrawn')),
  customer_accepted_at timestamptz,
  created_at timestamptz not null default now(),
  unique (booking_id, version)
@@ -70,3 +71,20 @@ alter table public.booking_transfers enable row level security;
 revoke all on public.worker_stripe_accounts, public.booking_quotes,
  public.booking_payments, public.booking_payment_events,
  public.booking_payment_disputes, public.booking_transfers from anon, authenticated;
+
+-- Atomic approval used by the existing approve-booking-quote Edge Function.
+create or replace function public.approve_booking_quote(p_quote_id uuid, p_customer_id uuid)
+returns boolean language plpgsql security definer set search_path = ''
+as $$
+declare changed integer;
+begin
+ if auth.uid() is distinct from p_customer_id then return false; end if;
+ update public.booking_quotes q set status='accepted', customer_accepted_at=now()
+ from public.bookings b
+ where q.id=p_quote_id and q.booking_id=b.id and b.customer_id=p_customer_id
+ and b.provider_id=q.provider_id and b.status='accepted' and q.status='proposed';
+ get diagnostics changed = row_count;
+ return changed=1;
+end; $$;
+revoke all on function public.approve_booking_quote(uuid,uuid) from public,anon;
+grant execute on function public.approve_booking_quote(uuid,uuid) to authenticated;
