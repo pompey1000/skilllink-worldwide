@@ -47,12 +47,25 @@ Deno.serve(async (request) => {
   const { data: existing } = await db.from("company_application_notifications")
     .select("status").eq("application_id", id).maybeSingle();
   if (existing?.status === "sent") return json({ ok: true, duplicate: true });
+  if (existing?.status === "processing") return json({ ok: true, queued_or_processing: true });
 
-  // Reserve notification before sending, to avoid duplicate alerts on webhook retries.
-  const { data: reservation, error: reserveError } = await db.from("company_application_notifications")
-    .upsert({ application_id: id, status: "processing", updated_at: new Date().toISOString() },
-      { onConflict: "application_id", ignoreDuplicates: true }).select("application_id").maybeSingle();
-  if (reserveError) return json({ error: "Unable to reserve notification" }, 500);
+  // Reserve notification before sending. Failed deliveries can be retried explicitly.
+  let reservation: { application_id: string } | null = null;
+  if (existing?.status === "failed") {
+    const result = await db.from("company_application_notifications")
+      .update({ status: "processing", updated_at: new Date().toISOString() })
+      .eq("application_id", id).eq("status", "failed")
+      .select("application_id").maybeSingle();
+    if (result.error) return json({ error: "Unable to retry notification" }, 500);
+    reservation = result.data;
+  } else {
+    const result = await db.from("company_application_notifications")
+      .upsert({ application_id: id, status: "processing", updated_at: new Date().toISOString() },
+        { onConflict: "application_id", ignoreDuplicates: true })
+      .select("application_id").maybeSingle();
+    if (result.error) return json({ error: "Unable to reserve notification" }, 500);
+    reservation = result.data;
+  }
   if (!reservation) return json({ ok: true, queued_or_processing: true });
 
   const subject = "New worker application on Skill Link Worldwide";
