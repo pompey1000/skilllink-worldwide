@@ -6,7 +6,10 @@
 
 .company-topnav{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.company-topnav a{text-decoration:none;font-size:14px}.company-topnav .company-signin{background:#0b9777;color:#fff;padding:11px 14px;border-radius:10px;font-weight:700}header{position:sticky;top:0;z-index:10}@media(max-width:680px){header{padding:12px 4%}.company-topnav{gap:9px}.company-topnav a{font-size:12px}}
 
-#opening-list input{font-size:12px;overflow:hidden;text-overflow:ellipsis}.company-topnav{max-width:80%;overflow-x:auto;white-space:nowrap}
+#opening-list input{font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.hiring-summary{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}.hiring-count{display:flex;flex-direction:column;gap:3px;border:1px solid #d6e7e1;background:#f4faf8;padding:11px 13px;border-radius:12px;min-width:106px}.hiring-count strong{font-size:21px}.hiring-count span{font-size:12px;color:#375c52}
+.application-head{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}.application-head h3{margin:0}.applicant-actions{border-top:1px solid #dbe6e9;margin-top:14px;padding-top:10px}.applicant-actions label{margin:4px 0}.applicant-actions select{max-width:260px}
+.company-topnav{max-width:80%;overflow-x:auto;white-space:nowrap}
 </style></head><body><header><strong>Skill Link Worldwide</strong><nav class="company-topnav"><a class="company-signin" href="#auth">🔐 Company Sign In</a><a href="#company">Company Account</a><a href="#hiring">Hire Workers</a><a href="#applicants">Applications</a><a href="#board">Contracts</a><a href="/">Home</a></nav></header><main>
 <h1>Company Account</h1><p class="muted">For Charlotte-area businesses: use your own company login to request verification, post staffing needs, or bid on open contracts.</p><p>Post staffing or project opportunities, compare company bids, and review proposed Skill Link fees. <strong>Test mode:</strong> no billing, payroll, or payments are active.</p>
 <div class="notice">Only approved business accounts can post contracts or send bids. Signing up does not grant approval. Awards are records of selection, not legally binding staffing agreements or payments. The proposed platform fee is <strong>10% of the selected bid</strong>, subject to separate agreement. The $500 temp-to-permanent conversion fee is separate.</div>
@@ -21,7 +24,15 @@
 <button type="submit">Create Worker Application Link</button><p id="opening-status" role="status"></p></form>
 <div id="opening-list"></div>
 </section>
-<section id="applicants" class="hidden"><h2>Company Applicant Inbox</h2><p class="muted">Applications submitted through your links appear here for your company to review. Applicant details are not public. Email notifications are not configured yet.</p><button class="alt" id="applicants-refresh" type="button">Refresh Applications</button><p id="applicants-status" role="status"></p><div id="applicants-list"></div></section>
+<section id="applicants" class="hidden"><h2>Company Hiring Dashboard</h2>
+<p class="muted">Review applicants, filter by hiring stage, and keep track of their progress. Applications are private to your approved company. Changing a status is internal tracking only; it does not send a message, schedule an interview, or make a job offer.</p>
+<div class="hiring-summary" id="hiring-summary" aria-label="Applicant totals"></div>
+<div class="grid"><div><label for="applicant-filter">Show applicants</label>
+<select id="applicant-filter"><option value="all">All applicants</option><option value="new">New</option><option value="under_review">Under Review</option><option value="interview">Interview</option><option value="hired">Hired</option><option value="not_selected">Not Selected</option></select></div>
+<div><label for="applicant-search">Search name or job</label><input id="applicant-search" placeholder="Search your applicants"></div></div>
+<button class="alt" id="applicants-refresh" type="button">Refresh Applications</button>
+<p id="applicants-status" role="status" aria-live="polite"></p><div id="applicants-list"></div>
+</section>
 <section id="board"><h2>Business contract board</h2><p class="muted">Approved companies can see available contracts. If you posted a contract, you can review bids.</p><button id="refresh" class="alt">Refresh contracts</button><p id="board-status" role="status">Sign in to browse.</p><div id="contracts"></div></section>
 <section id="post" class="hidden"><h2>Post a contract</h2><p class="muted">Describe the staffing or project need. Do not include private information about workers.</p><form id="contract-form"><div class="grid"><div><label>Contract title</label><input name="title" required minlength="5" maxlength="160" placeholder="Warehouse shift staffing"></div><div><label>Location</label><input name="city" required maxlength="160" placeholder="Charlotte, NC"></div><div><label>Positions / skills</label><input name="roles" required maxlength="300" placeholder="Forklift operators"></div><div><label>Number of workers</label><input name="count" type="number" min="1" max="10000" value="1" required></div><div><label>Type</label><select name="kind"><option value="temporary">Temporary staffing</option><option value="permanent">Permanent hiring</option><option value="project">Project contract</option></select></div><div><label>Budget in USD (optional)</label><input name="budget" type="number" step=".01" min="1" max="100000000"></div></div><label>Full description</label><textarea name="description" required minlength="10" maxlength="3000"></textarea><button type="submit">Publish contract</button></form><p id="post-status" role="status"></p></section>
 <section id="fees"><h2>Skill Link fee tracker</h2><p>Skill Link proposes a <strong>10% platform fee</strong> on the selected company bid. Every new proposal stays <strong>Pending fee agreement</strong> until written terms are accepted. No charges, invoices, or payments are enabled. The separate $500 temp-to-permanent conversion fee is not automatically added.</p><div id="fee-list"><p class="muted">Sign in to view contracts involving your company.</p></div></section>
@@ -83,17 +94,61 @@ $('opening-list').addEventListener('click',async e=>{
  close.disabled=true;const {error}=await client.from('company_job_openings').update({status:'closed'}).eq('id',close.dataset.closeOpening).eq('company_id',user.id);
  $('opening-status').textContent=error?'Could not close opening: '+error.message:'Opening closed to new applications.';await loadOpenings()
 });
+const applicantStages={new:'New',under_review:'Under Review',interview:'Interview',hired:'Hired',not_selected:'Not Selected'};
+let applicantRows=[], applicantJobNames={};
 $('applicants-refresh').addEventListener('click',loadApplicants);
+$('applicant-filter').addEventListener('change',renderApplicants);
+$('applicant-search').addEventListener('input',renderApplicants);
 async function loadApplicants(){
- if(company?.status!=='approved'||!user){$('applicants-list').innerHTML='';return}
+ if(company?.status!=='approved'||!user){applicantRows=[];$('applicants-list').innerHTML='';$('hiring-summary').innerHTML='';return}
  const openings=await client.from('company_job_openings').select('id,title').eq('company_id',user.id).limit(200);
  if(openings.error){$('applicants-status').textContent='Setup required: '+openings.error.message;return}
- const names=Object.fromEntries((openings.data||[]).map(j=>[j.id,j.title]));
- const {data,error}=await client.from('company_worker_applications').select('id,opening_id,full_name,email,phone,city,experience,availability,message,created_at').eq('company_id',user.id).order('created_at',{ascending:false}).limit(100);
- $('applicants-status').textContent=error?'Unable to load applicants: '+error.message:(data||[]).length+' application(s) in your inbox.';
- $('applicants-list').innerHTML=error?'':data?.length?data.map(a=>
- '<article class="card"><h3>'+escapeHTML(a.full_name)+'</h3><p><strong>Job:</strong> '+escapeHTML(names[a.opening_id]||'Job opening')+'</p><p><strong>Contact:</strong> <a href="mailto:'+encodeURIComponent(a.email)+'">'+escapeHTML(a.email)+'</a> · '+escapeHTML(a.phone)+'</p><p><strong>City:</strong> '+escapeHTML(a.city)+'</p><p><strong>Experience:</strong> '+escapeHTML(a.experience)+'</p><p><strong>Availability:</strong> '+escapeHTML(a.availability)+'</p>'+(a.message?'<p><strong>Notes:</strong> '+escapeHTML(a.message)+'</p>':'')+'<small>Submitted: '+escapeHTML(new Date(a.created_at).toLocaleString())+'</small></article>').join(''):'<p class="muted">No worker applications received yet.</p>';
+ applicantJobNames=Object.fromEntries((openings.data||[]).map(j=>[j.id,j.title]));
+ const {data,error}=await client.from('company_worker_applications')
+ .select('id,opening_id,full_name,email,phone,city,experience,availability,message,review_status,created_at')
+ .eq('company_id',user.id).order('created_at',{ascending:false}).limit(100);
+ if(error){$('applicants-status').textContent='Hiring dashboard setup required: '+error.message;$('applicants-list').innerHTML='';return}
+ applicantRows=data||[];renderApplicants();
 }
+function renderApplicants(){
+ const all=applicantRows,filter=$('applicant-filter').value,needle=$('applicant-search').value.trim().toLowerCase();
+ $('hiring-summary').innerHTML=['all',...Object.keys(applicantStages)].map(key=>
+ '<div class="hiring-count"><strong>'+ (key==='all'?all.length:all.filter(a=>a.review_status===key).length)+'</strong><span>'+escapeHTML(key==='all'?'Total Applicants':applicantStages[key])+'</span></div>').join('');
+ const filtered=all.filter(a=>(filter==='all'||a.review_status===filter)&&
+ (!needle||(a.full_name+' '+(applicantJobNames[a.opening_id]||'')).toLowerCase().includes(needle)));
+ $('applicants-status').textContent=filtered.length+' applicant(s) shown out of '+all.length+' recent application(s).';
+ $('applicants-list').innerHTML=filtered.length?filtered.map(a=>{
+ const stage=applicantStages[a.review_status]||'New';
+ const options=Object.entries(applicantStages).map(([key,label])=>
+ '<option value="'+key+'"'+(a.review_status===key?' selected':'')+'>'+label+'</option>').join('');
+ return '<article class="card"><div class="application-head"><h3>'+escapeHTML(a.full_name)+'</h3><span class="tag">'+escapeHTML(stage)+'</span></div>'+
+ '<p><strong>Job:</strong> '+escapeHTML(applicantJobNames[a.opening_id]||'Job opening')+'</p>'+
+ '<p><strong>Contact:</strong> <a href="mailto:'+encodeURIComponent(a.email)+'">'+escapeHTML(a.email)+'</a> · '+escapeHTML(a.phone)+'</p>'+
+ '<details><summary>View experience and availability</summary>'+
+ '<p><strong>City:</strong> '+escapeHTML(a.city)+'</p><p><strong>Experience:</strong> '+escapeHTML(a.experience)+'</p>'+
+ '<p><strong>Availability:</strong> '+escapeHTML(a.availability)+'</p>'+
+ (a.message?'<p><strong>Notes:</strong> '+escapeHTML(a.message)+'</p>':'')+'</details>'+
+ '<div class="applicant-actions"><label for="stage-'+escapeHTML(a.id)+'">Hiring stage</label>'+
+ '<select id="stage-'+escapeHTML(a.id)+'" data-application-status="'+escapeHTML(a.id)+'">'+options+'</select>'+
+ '<button type="button" data-save-application="'+escapeHTML(a.id)+'">Save Stage</button></div>'+
+ '<small>Submitted: '+escapeHTML(new Date(a.created_at).toLocaleString())+'</small></article>';
+ }).join(''):'<p class="muted">No applicants match this filter.</p>';
+}
+$('applicants-list').addEventListener('click',async e=>{
+ const button=e.target.closest('[data-save-application]');if(!button||company?.status!=='approved'||!user)return;
+ const id=button.dataset.saveApplication;
+ const dropdown=$('applicants-list').querySelector('[data-application-status="'+id+'"]');
+ const stage=dropdown?.value;
+ if(!Object.prototype.hasOwnProperty.call(applicantStages,stage))return;
+ const item=applicantRows.find(a=>a.id===id);if(!item)return;
+ if(stage==='hired'&&!confirm('Mark as Hired in your private dashboard? This does not contact the applicant or create an employment agreement.'))return;
+ button.disabled=true;$('applicants-status').textContent='Saving hiring stage…';
+ const {data,error}=await client.rpc('set_company_application_status',{p_application_id:id,p_status:stage});
+ if(error||data!==true){$('applicants-status').textContent='Could not save stage: '+(error?.message||'Permission denied');button.disabled=false;return}
+ item.review_status=stage;
+ renderApplicants();
+ $('applicants-status').textContent='Saved as '+applicantStages[stage]+'. This is private tracking only; no applicant message was sent.';
+});
 async function loadBoard(){
  const list=$('contracts');if(!user){list.innerHTML='';return}if(company?.status!=='approved'&&!admin){$('board-status').textContent='Company approval is required to browse contracts.';list.innerHTML='';return}
  let {data,error}=await client.from('business_contracts').select('id,owner_id,title,description,city,roles_needed,workers_needed,contract_kind,budget_cents,status,created_at').order('created_at',{ascending:false}).limit(70);
