@@ -20,4 +20,4 @@ jobs:
         with:
           version: latest
       - name: Deploy company application notification function only
-        run: supabase functions deploy notify-company-application --remote "$PROJECT_REF" --no-verify-jwt --yes
+        run: supabase functions deploy notify-company-application --remote="$PROJECT_REF" --no-verify-jwt --yes
