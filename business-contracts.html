@@ -5,11 +5,23 @@
 :root{font-family:system-ui,-apple-system,sans-serif;color:#193448;background:#f3f7fa}*{box-sizing:border-box}body{margin:0}header{background:#102c42;color:#fff;padding:17px 5%;display:flex;justify-content:space-between;align-items:center;gap:12px}header a{color:#fff}main{max-width:1000px;margin:auto;padding:16px}h1{font-size:clamp(26px,5vw,40px)}h2{font-size:22px}p{line-height:1.5}section{background:#fff;border:1px solid #dde7ed;padding:18px;border-radius:16px;margin:15px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{border:1px solid #dce6ed;border-radius:12px;padding:14px;margin:10px 0;background:#fbfdff}label{display:block;font-weight:700;font-size:13px;margin:12px 0 5px}input,textarea,select{display:block;width:100%;padding:12px;border:1px solid #b9cbd7;border-radius:10px;font:inherit}textarea{min-height:90px}button,.btn{display:inline-block;background:#0b9777;color:white;border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:700;margin:10px 7px 3px 0;cursor:pointer}.alt{background:#e7f3ef;color:#174538}button:disabled{opacity:.5}small,.muted{color:#587082}.notice{background:#fff4df;padding:12px;border-radius:10px}.hidden{display:none!important}#message{font-weight:600;min-height:24px}.tag{display:inline-block;font-size:12px;border-radius:9px;padding:4px 9px;background:#e2f4ed;color:#076b52}.actionrow{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:680px){.grid{grid-template-columns:1fr}header{flex-wrap:wrap}section{padding:14px}}
 
 .company-topnav{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.company-topnav a{text-decoration:none;font-size:14px}.company-topnav .company-signin{background:#0b9777;color:#fff;padding:11px 14px;border-radius:10px;font-weight:700}header{position:sticky;top:0;z-index:10}@media(max-width:680px){header{padding:12px 4%}.company-topnav{gap:9px}.company-topnav a{font-size:12px}}
-</style></head><body><header><strong>Skill Link Worldwide</strong><nav class="company-topnav"><a class="company-signin" href="#auth">🔐 Company Sign In</a><a href="#company">Company Account</a><a href="#board">Contracts</a><a href="/">Home</a></nav></header><main>
+
+#opening-list input{font-size:12px;overflow:hidden;text-overflow:ellipsis}.company-topnav{max-width:80%;overflow-x:auto;white-space:nowrap}
+</style></head><body><header><strong>Skill Link Worldwide</strong><nav class="company-topnav"><a class="company-signin" href="#auth">🔐 Company Sign In</a><a href="#company">Company Account</a><a href="#hiring">Hire Workers</a><a href="#applicants">Applications</a><a href="#board">Contracts</a><a href="/">Home</a></nav></header><main>
 <h1>Company Account</h1><p class="muted">For Charlotte-area businesses: use your own company login to request verification, post staffing needs, or bid on open contracts.</p><p>Post staffing or project opportunities, compare company bids, and review proposed Skill Link fees. <strong>Test mode:</strong> no billing, payroll, or payments are active.</p>
 <div class="notice">Only approved business accounts can post contracts or send bids. Signing up does not grant approval. Awards are records of selection, not legally binding staffing agreements or payments. The proposed platform fee is <strong>10% of the selected bid</strong>, subject to separate agreement. The $500 temp-to-permanent conversion fee is separate.</div>
 <section id="auth"><h2>Business account login</h2><div id="signin"><div class="grid"><div><label>Email</label><input id="email" type="email" autocomplete="email"></div><div><label>Password</label><input id="password" type="password" autocomplete="current-password"></div></div><button id="login">Sign in</button><a href="/#account">Create your company login</a></div><div id="signed" class="hidden"><p id="signed-email"></p><button class="alt" id="logout">Sign out</button></div><p id="message" role="status"></p></section>
 <section id="company"><h2>Company registration & verification</h2><p id="company-status">Sign in to check your company status.</p><form id="register" class="hidden"><div class="grid"><div><label>Business name</label><input name="company" maxlength="160" required></div><div><label>Company email</label><input name="contact" type="email" maxlength="254" required></div><div><label>City / state</label><input name="city" maxlength="160" placeholder="Charlotte, NC" required></div></div><button type="submit">Request company approval</button></form></section>
+<section id="hiring" class="hidden"><h2>Hire workers — share an application link</h2>
+<p>Post a job opening and copy its private application link to send to workers by text, email, or social media. Applicants can complete the form without creating an account. Their information goes only to your company’s secure applicant inbox.</p>
+<form id="opening-form"><div class="grid">
+<div><label for="opening-title">Job title</label><input id="opening-title" minlength="4" maxlength="160" required placeholder="Warehouse Associate"></div>
+<div><label for="opening-location">Job location</label><input id="opening-location" minlength="2" maxlength="160" required placeholder="Charlotte, NC"></div>
+</div><label for="opening-description">Job duties and requirements</label><textarea id="opening-description" minlength="10" maxlength="3000" required placeholder="Describe the role, schedule, pay range if available, and requirements"></textarea>
+<button type="submit">Create Worker Application Link</button><p id="opening-status" role="status"></p></form>
+<div id="opening-list"></div>
+</section>
+<section id="applicants" class="hidden"><h2>Company Applicant Inbox</h2><p class="muted">Applications submitted through your links appear here for your company to review. Applicant details are not public. Email notifications are not configured yet.</p><button class="alt" id="applicants-refresh" type="button">Refresh Applications</button><p id="applicants-status" role="status"></p><div id="applicants-list"></div></section>
 <section id="board"><h2>Business contract board</h2><p class="muted">Approved companies can see available contracts. If you posted a contract, you can review bids.</p><button id="refresh" class="alt">Refresh contracts</button><p id="board-status" role="status">Sign in to browse.</p><div id="contracts"></div></section>
 <section id="post" class="hidden"><h2>Post a contract</h2><p class="muted">Describe the staffing or project need. Do not include private information about workers.</p><form id="contract-form"><div class="grid"><div><label>Contract title</label><input name="title" required minlength="5" maxlength="160" placeholder="Warehouse shift staffing"></div><div><label>Location</label><input name="city" required maxlength="160" placeholder="Charlotte, NC"></div><div><label>Positions / skills</label><input name="roles" required maxlength="300" placeholder="Forklift operators"></div><div><label>Number of workers</label><input name="count" type="number" min="1" max="10000" value="1" required></div><div><label>Type</label><select name="kind"><option value="temporary">Temporary staffing</option><option value="permanent">Permanent hiring</option><option value="project">Project contract</option></select></div><div><label>Budget in USD (optional)</label><input name="budget" type="number" step=".01" min="1" max="100000000"></div></div><label>Full description</label><textarea name="description" required minlength="10" maxlength="3000"></textarea><button type="submit">Publish contract</button></form><p id="post-status" role="status"></p></section>
 <section id="fees"><h2>Skill Link fee tracker</h2><p>Skill Link proposes a <strong>10% platform fee</strong> on the selected company bid. Every new proposal stays <strong>Pending fee agreement</strong> until written terms are accepted. No charges, invoices, or payments are enabled. The separate $500 temp-to-permanent conversion fee is not automatically added.</p><div id="fee-list"><p class="muted">Sign in to view contracts involving your company.</p></div></section>
@@ -25,23 +37,63 @@ async function startup(){
  const {data:{session}}=await client.auth.getSession();user=session?.user||null;
  $('signin').classList.toggle('hidden',!!user);$('signed').classList.toggle('hidden',!user);
  $('signed-email').textContent=user?'Signed in as '+user.email:'';
- company=null;admin=false;$('post').classList.add('hidden');$('register').classList.add('hidden');$('admin').classList.add('hidden');
+ company=null;admin=false;$('post').classList.add('hidden');$('register').classList.add('hidden');$('admin').classList.add('hidden');$('hiring').classList.add('hidden');$('applicants').classList.add('hidden');
  if(!user){$('company-status').textContent='Sign in to register your company.';$('contracts').innerHTML='';$('fee-list').innerHTML='';$('board-status').textContent='Sign in to browse.';return;}
  let r=await client.from('business_accounts').select('user_id,company_name,status').eq('user_id',user.id).maybeSingle();
  if(r.error){$('company-status').textContent='Company database setup needed: '+r.error.message;return;}
  company=r.data;
  if(!company){$('company-status').textContent='Register your company to request approval.';$('register').classList.remove('hidden')}
  else{$('company-status').textContent=company.company_name+' — '+company.status+(company.status==='pending'?'. Skill Link must approve your application.':'');}
- $('post').classList.toggle('hidden',company?.status!=='approved');
+ $('post').classList.toggle('hidden',company?.status!=='approved');$('hiring').classList.toggle('hidden',company?.status!=='approved');$('applicants').classList.toggle('hidden',company?.status!=='approved');
  const check=await client.rpc('is_skilllink_admin');admin=check.data===true&&!check.error;
  if(admin){$('admin').classList.remove('hidden');await loadAdmin()}
- await Promise.all([loadBoard(),loadFees()]);
+ await Promise.all([loadBoard(),loadFees(),loadOpenings(),loadApplicants()]);
 }
 $('login').addEventListener('click',async()=>{if(!client)return;notice('Signing in…');const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});notice(error?'Sign-in failed: '+error.message:'Signed in.');if(!error)await startup()});
 $('logout').addEventListener('click',async()=>{await client.auth.signOut();user=null;notice('Signed out.');await startup()});
 $('register').addEventListener('submit',async e=>{e.preventDefault();if(!user)return;const f=e.target;const {error}=await client.from('business_accounts').insert({user_id:user.id,company_name:f.elements.company.value.trim(),contact_email:f.elements.contact.value.trim(),city:f.elements.city.value.trim()});notice(error?'Application failed: '+error.message:'Company application sent for approval.');if(!error)await startup()});
 $('contract-form').addEventListener('submit',async e=>{e.preventDefault();if(!user||company?.status!=='approved')return;const f=e.target,b=f.elements.budget.value;const amount=b?Math.round(Number(b)*100):null;const button=f.querySelector('button[type="submit"]');button.disabled=true;const {error}=await client.from('business_contracts').insert({owner_id:user.id,title:f.elements.title.value.trim(),description:f.elements.description.value.trim(),city:f.elements.city.value.trim(),roles_needed:f.elements.roles.value.trim(),workers_needed:Number(f.elements.count.value),contract_kind:f.elements.kind.value,budget_cents:amount});$('post-status').textContent=error?'Could not post: '+error.message:'Contract posted.';button.disabled=false;if(!error){f.reset();await loadBoard()}});
 $('refresh').addEventListener('click',()=>{loadBoard();loadFees()});
+const applicationUrl=id=>new URL('/apply.html?opening='+encodeURIComponent(id),location.origin).href;
+$('opening-form').addEventListener('submit',async e=>{
+ e.preventDefault();if(company?.status!=='approved'||!user)return;
+ const button=e.target.querySelector('button[type="submit"]');button.disabled=true;
+ const {error}=await client.from('company_job_openings').insert({
+ company_id:user.id,title:$('opening-title').value.trim(),
+ location:$('opening-location').value.trim(),description:$('opening-description').value.trim()
+ });
+ $('opening-status').textContent=error?'Could not create job link: '+error.message:'Application link created. Copy and share it below.';
+ button.disabled=false;if(!error){e.target.reset();await loadOpenings()}
+});
+async function loadOpenings(){
+ if(company?.status!=='approved'||!user){$('opening-list').innerHTML='';return}
+ const {data,error}=await client.from('company_job_openings').select('id,title,location,status,created_at').eq('company_id',user.id).order('created_at',{ascending:false}).limit(75);
+ $('opening-list').innerHTML=error?'<p class="muted">Application database setup required: '+escapeHTML(error.message)+'</p>':data?.length?data.map(j=>
+ '<div class="card"><strong>'+escapeHTML(j.title)+'</strong> · '+escapeHTML(j.location)+' <span class="tag">'+escapeHTML(j.status)+'</span><p class="muted">Link for workers:</p><input aria-label="Worker application link" readonly value="'+escapeHTML(applicationUrl(j.id))+'"><div class="actionrow"><button type="button" data-copy-application="'+escapeHTML(j.id)+'">Copy application link</button>'+(j.status==='open'?'<button type="button" class="alt" data-close-opening="'+escapeHTML(j.id)+'">Close applications</button>':'')+'</div></div>').join(''):'<p class="muted">No openings yet. Create one above to share an application link.</p>';
+}
+$('opening-list').addEventListener('click',async e=>{
+ const copy=e.target.closest('[data-copy-application]');
+ if(copy){
+  const url=applicationUrl(copy.dataset.copyApplication);
+  try{await navigator.clipboard.writeText(url);$('opening-status').textContent='Application link copied. Share it with workers.'}
+  catch{const inp=copy.closest('.card').querySelector('input');inp.focus();inp.select();$('opening-status').textContent='Select and copy the link in the box above.'}
+  return;
+ }
+ const close=e.target.closest('[data-close-opening]');if(!close||!confirm('Close this job application link to new applicants?'))return;
+ close.disabled=true;const {error}=await client.from('company_job_openings').update({status:'closed'}).eq('id',close.dataset.closeOpening).eq('company_id',user.id);
+ $('opening-status').textContent=error?'Could not close opening: '+error.message:'Opening closed to new applications.';await loadOpenings()
+});
+$('applicants-refresh').addEventListener('click',loadApplicants);
+async function loadApplicants(){
+ if(company?.status!=='approved'||!user){$('applicants-list').innerHTML='';return}
+ const openings=await client.from('company_job_openings').select('id,title').eq('company_id',user.id).limit(200);
+ if(openings.error){$('applicants-status').textContent='Setup required: '+openings.error.message;return}
+ const names=Object.fromEntries((openings.data||[]).map(j=>[j.id,j.title]));
+ const {data,error}=await client.from('company_worker_applications').select('id,opening_id,full_name,email,phone,city,experience,availability,message,created_at').eq('company_id',user.id).order('created_at',{ascending:false}).limit(100);
+ $('applicants-status').textContent=error?'Unable to load applicants: '+error.message:(data||[]).length+' application(s) in your inbox.';
+ $('applicants-list').innerHTML=error?'':data?.length?data.map(a=>
+ '<article class="card"><h3>'+escapeHTML(a.full_name)+'</h3><p><strong>Job:</strong> '+escapeHTML(names[a.opening_id]||'Job opening')+'</p><p><strong>Contact:</strong> <a href="mailto:'+encodeURIComponent(a.email)+'">'+escapeHTML(a.email)+'</a> · '+escapeHTML(a.phone)+'</p><p><strong>City:</strong> '+escapeHTML(a.city)+'</p><p><strong>Experience:</strong> '+escapeHTML(a.experience)+'</p><p><strong>Availability:</strong> '+escapeHTML(a.availability)+'</p>'+(a.message?'<p><strong>Notes:</strong> '+escapeHTML(a.message)+'</p>':'')+'<small>Submitted: '+escapeHTML(new Date(a.created_at).toLocaleString())+'</small></article>').join(''):'<p class="muted">No worker applications received yet.</p>';
+}
 async function loadBoard(){
  const list=$('contracts');if(!user){list.innerHTML='';return}if(company?.status!=='approved'&&!admin){$('board-status').textContent='Company approval is required to browse contracts.';list.innerHTML='';return}
  let {data,error}=await client.from('business_contracts').select('id,owner_id,title,description,city,roles_needed,workers_needed,contract_kind,budget_cents,status,created_at').order('created_at',{ascending:false}).limit(70);
