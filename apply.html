@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Worker Job Application | Skill Link Worldwide</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#183448;background:#f3f7fa}*{box-sizing:border-box}body{margin:0}header{background:#102c42;color:white;padding:18px 5%;display:flex;justify-content:space-between;align-items:center}header a{color:white}main{max-width:700px;margin:25px auto;padding:0 14px}section{background:#fff;border:1px solid #d9e5eb;padding:22px;border-radius:15px;margin:16px 0}h1{font-size:clamp(26px,5vw,36px)}p{line-height:1.5}.muted{color:#5d7382}label{display:block;font-weight:700;margin:15px 0 5px}input,textarea{font:inherit;padding:12px;width:100%;border:1px solid #b7cad5;border-radius:9px}textarea{min-height:110px}button{font:inherit;background:#0b9777;color:white;border:0;border-radius:10px;padding:13px 18px;font-weight:750;cursor:pointer}button:disabled{opacity:.5}.notice{padding:13px;border-radius:10px;background:#eaf6f2}.error{color:#b52e23}.hidden{display:none!important}.agree{display:flex;gap:10px;align-items:flex-start;line-height:1.5}.agree input{width:20px;height:20px;flex-shrink:0;margin:3px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}@media(max-width:650px){.grid{grid-template-columns:1fr}section{padding:16px}}
+</style></head><body><header><strong>Skill Link Worldwide</strong><a href="/">Home</a></header><main>
+<h1>Apply for a Job</h1><p class="muted">Submit your application directly to the company named below through its private Skill Link account. Applying is free. Skill Link is in testing and does not guarantee employment.</p>
+<section><h2 id="job-title">Loading job opportunity…</h2><p id="job-company"></p><p id="job-location" class="muted"></p><p id="job-description"></p><p id="job-status" role="status"></p></section>
+<section id="application" class="hidden"><h2>Your application</h2><p class="muted">Only provide information you are comfortable sharing with the company. Do not include Social Security numbers, bank details, ID photos, or other sensitive documents.</p>
+<form id="apply-form">
+<div class="grid">
+<div><label for="full-name">Full name</label><input id="full-name" maxlength="160" autocomplete="name" required></div>
+<div><label for="contact-email">Email address</label><input id="contact-email" type="email" maxlength="254" autocomplete="email" required></div>
+<div><label for="phone">Phone number</label><input id="phone" type="tel" minlength="7" maxlength="40" autocomplete="tel" required></div>
+<div><label for="city">City / state</label><input id="city" maxlength="160" autocomplete="address-level2" placeholder="Charlotte, NC" required></div>
+</div>
+<label for="experience">Relevant skills and work experience</label><textarea id="experience" minlength="3" maxlength="2000" required placeholder="Describe your experience and qualifications"></textarea>
+<label for="availability">When are you available to start?</label><input id="availability" maxlength="250" required placeholder="Immediately, next week, weekdays…">
+<label for="extra">Anything else you'd like the company to know? (optional)</label><textarea id="extra" maxlength="2000"></textarea>
+<label class="agree"><input type="checkbox" id="consent" required><span>I agree that Skill Link can share this application, including my contact details, with <strong id="consent-company">the company</strong> for its hiring review. I understand this does not guarantee a job.</span></label>
+<button id="submit" type="submit">Send Application to Company</button>
+<p id="form-status" role="status" aria-live="polite"></p>
+</form></section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search),opening=params.get('opening');
+const validId=/^[a-f\d]{8}-[a-f\d]{4}-[1-8][a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i;
+let client=null;
+if(window.supabase)client=window.supabase.createClient('https://iiaskaknyfenglihfrpo.supabase.co','sb_publishable_W21KLGIbvYUAQuE4Sgvs9A_pKK5SaWT');
+async function load(){
+ if(!client){$('job-status').textContent='Could not connect to applications. Please try again.';return}
+ if(!validId.test(opening||'')){$('job-title').textContent='Application link missing';$('job-status').textContent='Ask the company or Skill Link for a complete job application link.';return}
+ const {data,error}=await client.rpc('get_company_job_for_application',{p_opening_id:opening});
+ if(error){$('job-title').textContent='Application setup required';$('job-status').textContent='This form is not available yet. Please contact Skill Link.';return}
+ const item=data?.[0];if(!item){$('job-title').textContent='This opening is unavailable';$('job-status').textContent='The link may be closed or no longer accepting applications.';return}
+ $('job-title').textContent=item.title;$('job-company').textContent='Company: '+item.company_name;$('job-location').textContent='Location: '+item.location;$('job-description').textContent=item.description;$('consent-company').textContent=item.company_name;$('application').classList.remove('hidden');
+}
+$('apply-form').addEventListener('submit',async event=>{
+ event.preventDefault();if(!client||!opening)return;
+ const button=$('submit');button.disabled=true;$('form-status').textContent='Submitting…';
+ const {error}=await client.rpc('submit_company_worker_application',{
+ p_opening_id:opening,p_full_name:$('full-name').value.trim(),p_email:$('contact-email').value.trim(),
+ p_phone:$('phone').value.trim(),p_city:$('city').value.trim(),p_experience:$('experience').value.trim(),
+ p_availability:$('availability').value.trim(),p_message:$('extra').value.trim(),p_consent:$('consent').checked
+ });
+ if(error){$('form-status').textContent='Could not submit: '+error.message;button.disabled=false;return}
+ $('application').innerHTML='<h2>Application submitted</h2><p class="notice">Thank you. Your application is now available in the named company’s private Skill Link applicant inbox. The company may contact you using the details you provided. No email confirmation is promised.</p>';
+});
+load().catch(()=>{$('job-status').textContent='Unable to load this application right now.'});
+</script></body></html>
