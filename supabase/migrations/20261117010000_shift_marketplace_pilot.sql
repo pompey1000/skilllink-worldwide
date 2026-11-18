@@ -170,7 +170,7 @@ revoke all on function public.skilllink_assign_test_worker(uuid,boolean) from pu
 revoke all on function public.skilllink_test_clock(uuid,boolean) from public,anon;
 revoke all on function public.skilllink_approve_test_hours(uuid) from public,anon;
 grant execute on function public.skilllink_create_test_shift(text,text,text,text,text,timestamptz,timestamptz,integer,integer) to authenticated;
-grant execute on function public.skilllink_request_test_shift(uuid) to authenticated;
+grant execute on function public.skilllink_request_test_shift(uuid,text) to authenticated;
 grant execute on function public.skilllink_assign_test_worker(uuid,boolean) to authenticated;
 grant execute on function public.skilllink_test_clock(uuid,boolean) to authenticated;
 grant execute on function public.skilllink_approve_test_hours(uuid) to authenticated;
