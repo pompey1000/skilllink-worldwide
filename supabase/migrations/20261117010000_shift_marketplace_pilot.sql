@@ -25,6 +25,7 @@ create table if not exists public.skilllink_shift_requests (
  id uuid primary key default gen_random_uuid(),
  shift_id uuid not null references public.skilllink_shifts(id) on delete cascade,
  worker_id uuid not null references auth.users(id) on delete cascade,
+ worker_name text not null check (char_length(trim(worker_name)) between 2 and 160),
  status text not null default 'requested'
    check (status in ('requested','assigned','declined','withdrawn','completed')),
  requested_at timestamptz not null default now(),
@@ -84,7 +85,7 @@ begin
 end $$;
 
 -- Worker requests a TEST shift; this does not confirm a job or pay.
-create or replace function public.skilllink_request_test_shift(p_shift_id uuid)
+create or replace function public.skilllink_request_test_shift(p_shift_id uuid,p_worker_name text)
 returns boolean language plpgsql security definer set search_path='' as $$
 declare v_shift public.skilllink_shifts%rowtype;
 begin
@@ -93,8 +94,8 @@ begin
  if not found or v_shift.status<>'test_open' or v_shift.start_at <= now()
  then raise exception 'This test shift is not open'; end if;
  if v_shift.company_id=(select auth.uid()) then raise exception 'Your company cannot apply to its own shift'; end if;
- insert into public.skilllink_shift_requests(shift_id,worker_id)
- values(p_shift_id,(select auth.uid()));
+ insert into public.skilllink_shift_requests(shift_id,worker_id,worker_name)
+ values(p_shift_id,(select auth.uid()),trim(p_worker_name));
  return true;
 exception when unique_violation then raise exception 'You have already requested this shift';
 end $$;
@@ -164,7 +165,7 @@ begin
 end $$;
 
 revoke all on function public.skilllink_create_test_shift(text,text,text,text,text,timestamptz,timestamptz,integer,integer) from public,anon;
-revoke all on function public.skilllink_request_test_shift(uuid) from public,anon;
+revoke all on function public.skilllink_request_test_shift(uuid,text) from public,anon;
 revoke all on function public.skilllink_assign_test_worker(uuid,boolean) from public,anon;
 revoke all on function public.skilllink_test_clock(uuid,boolean) from public,anon;
 revoke all on function public.skilllink_approve_test_hours(uuid) from public,anon;
