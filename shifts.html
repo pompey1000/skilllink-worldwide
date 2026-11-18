@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shift Marketplace | Skill Link Worldwide</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#17384b;background:#f3f7f9}*{box-sizing:border-box}body{margin:0}header{background:#102c42;color:white;padding:14px max(4%,calc((100% - 1060px)/2));display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}header a{color:white;text-decoration:none;font-size:14px}header strong{font-size:19px}header nav{display:flex;gap:13px;flex-wrap:wrap}main{max-width:1060px;margin:auto;padding:20px 4%}h1{font-size:clamp(29px,6vw,47px);line-height:1.12;margin:8px 0}h2{font-size:23px}p{line-height:1.55}section{background:white;border:1px solid #d7e4eb;border-radius:16px;padding:20px;margin:17px 0}.muted{color:#607587}.tag{display:inline-block;background:#e1f4ec;color:#086a54;padding:4px 9px;border-radius:9px;font-size:12px;font-weight:750}.warning{background:#fff2d6;padding:14px;border-radius:12px;color:#6f4c18}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{border:1px solid #dce7ec;border-radius:13px;padding:15px;background:#fcfefd}.card h3{margin:7px 0}label{display:block;font-size:13px;font-weight:750;margin:12px 0 5px}input,textarea,select{width:100%;padding:11px;border:1px solid #b5cad6;border-radius:9px;background:white;color:inherit;font:inherit}textarea{min-height:92px}button,.btn{background:#078d70;border:0;color:white;border-radius:9px;padding:11px 15px;font:inherit;font-weight:750;cursor:pointer;text-decoration:none;display:inline-block;margin:9px 7px 3px 0}.secondary{background:#e6f4ef;color:#144f40}.hidden{display:none!important}.status{min-height:24px;font-size:14px;font-weight:650}.flex{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.stats{display:flex;gap:15px;flex-wrap:wrap}.stat{background:#e6f5f0;border-radius:11px;padding:10px 15px;flex:1;min-width:120px}.stat strong{display:block;font-size:24px}.stat span{font-size:12px;color:#345d55}.controls{display:flex;flex-wrap:wrap;gap:6px}.controls button:disabled{opacity:.5}@media(max-width:670px){section{padding:15px}.grid,.cards{grid-template-columns:1fr}header{padding:13px 4%}header nav{gap:9px}main{padding:16px 4%}}
+</style></head><body>
+<header><strong>Skill Link <span style="color:#58d7b0">Worldwide</span></strong><nav><a href="/">Home</a><a href="/?view=worker#account">Worker Account</a><a href="/business-contracts.html">Company Account</a></nav></header>
+<main>
+<div class="tag">SHIFT MARKETPLACE • PRIVATE PILOT</div>
+<h1>Pick a shift. Build your future.</h1>
+<p>Flexible warehouse, cleaning and hospital support opportunities around Charlotte. Businesses describe the shifts they need covered; workers request shifts that fit their schedule.</p>
+<p class="warning"><strong>Testing only:</strong> Any shifts created here are test listings, not real job offers. No placement, payroll, clocked work, insurance, or payment is activated. Skill Link must finish its LLC, employer/payroll partner, insurance and business agreements before accepting real shifts.</p>
+<section id="auth"><h2>Sign in to Skill Link</h2>
+<div id="auth-form" class="grid"><div><label for="email">Email</label><input id="email" type="email" autocomplete="email"></div><div><label for="password">Password</label><input id="password" type="password" autocomplete="current-password"></div></div>
+<div class="flex"><button id="signin">Sign In</button><button id="signout" class="secondary hidden">Sign Out</button><a href="/#account">Create an account</a></div>
+<p id="session-status" class="status" role="status">Checking your sign-in…</p></section>
+<section id="browse"><div class="flex" style="justify-content:space-between"><h2>Browse test shifts</h2><button class="secondary" id="refresh">Refresh shifts</button></div>
+<div class="grid"><div><label for="category-filter">Type of work</label><select id="category-filter"><option value="all">All shifts</option><option value="warehouse">Warehouse</option><option value="housekeeping">Housekeeping</option><option value="hospital_support">Hospital support</option><option value="other">Other</option></select></div><div><label for="area-filter">Location</label><input id="area-filter" placeholder="Charlotte"></div></div>
+<p id="browse-status" class="status" role="status"></p><div id="shift-cards" class="cards"></div></section>
+<section id="worker" class="hidden"><h2>My shift requests</h2><p class="muted">Company selection and clock controls are simulations only. Times are recorded for testing and are not payable work hours.</p><div id="worker-list"></div></section>
+<section id="company" class="hidden"><h2>Post a test shift</h2><p class="muted">Approved business accounts can test posting shifts. The estimated 40% markup shown below is for planning only and is not an active bill.</p>
+<form id="shift-form"><div class="grid">
+<div><label for="title">Shift title</label><input id="title" required minlength="4" maxlength="160" placeholder="Warehouse Associate"></div>
+<div><label for="category">Category</label><select id="category"><option value="warehouse">Warehouse</option><option value="housekeeping">Housekeeping</option><option value="hospital_support">Hospital support (nonclinical)</option><option value="other">Other</option></select></div>
+<div><label for="location">Location</label><input id="location" required minlength="2" maxlength="180" placeholder="Charlotte, NC"></div>
+<div><label for="positions">Workers needed</label><input id="positions" type="number" required min="1" max="200" value="2"></div>
+<div><label for="start">Shift starts</label><input id="start" type="datetime-local" required></div>
+<div><label for="end">Shift ends</label><input id="end" type="datetime-local" required></div>
+<div><label for="pay">Worker pay rate ($/hour)</label><input id="pay" type="number" required min="7.25" max="200" step=".01" value="18"></div>
+<div><label>Estimated company rate (40% markup)</label><p id="rate" class="stat" style="margin:0">$25.20/hour • not a quote</p></div>
+</div><label for="description">Job duties and description</label><textarea id="description" required minlength="10" maxlength="3000" placeholder="Loading, sorting and organizing shipments"></textarea>
+<label for="requirements">Requirements (optional)</label><textarea id="requirements" maxlength="2000" placeholder="Comfortable standing for extended periods"></textarea>
+<button type="submit" id="post-shift">Create Test Shift</button><p class="status" id="post-status" role="status"></p></form>
+<h2>Manage test shifts & workers</h2><div id="company-list"></div></section>
+<section><h2>Worker benefits resources</h2><p>Workers can explore independently offered health coverage on <a href="https://www.healthcare.gov/" target="_blank" rel="noopener noreferrer">HealthCare.gov</a>. Skill Link does not enroll workers or pay optional premiums through this link. Employer obligations would still need separate arrangements.</p></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=v=>new Date(v).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'});
+const dollars=c=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(c)/100);
+const cat={warehouse:'Warehouse',housekeeping:'Housekeeping',hospital_support:'Hospital Support',other:'Other'};
+const api=window.supabase?.createClient('https://iiaskaknyfenglihfrpo.supabase.co','sb_publishable_W21KLGIbvYUAQuE4Sgvs9A_pKK5SaWT')||null;
+let user=null,company=null,shifts=[],requests=[];
+function msg(value){$('session-status').textContent=value}
+async function boot(){
+ if(!api){msg('Unable to load sign-in service.');return}
+ const {data:{session}}=await api.auth.getSession();user=session?.user||null;
+ $('auth-form').classList.toggle('hidden',!!user);$('signin').classList.toggle('hidden',!!user);$('signout').classList.toggle('hidden',!user);
+ msg(user?'Signed in: '+user.email:'Sign in to browse the pilot shift board.');
+ company=null;$('company').classList.add('hidden');$('worker').classList.toggle('hidden',!user);
+ if(!user){$('shift-cards').innerHTML='';$('browse-status').textContent='Sign in to view test shifts.';$('worker-list').innerHTML='';return}
+ const r=await api.from('business_accounts').select('user_id,company_name,status').eq('user_id',user.id).maybeSingle();
+ company=r.error?null:r.data;if(company?.status==='approved')$('company').classList.remove('hidden');
+ await refreshAll();
+}
+$('signin').addEventListener('click',async()=>{
+ if(!api)return;msg('Signing in…');
+ const {error}=await api.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+ if(error){msg('Sign-in failed: '+error.message);return}await boot();
+});
+$('signout').addEventListener('click',async()=>{if(api)await api.auth.signOut();await boot()});
+$('refresh').addEventListener('click',refreshAll);
+$('category-filter').addEventListener('change',renderShifts);
+$('area-filter').addEventListener('input',renderShifts);
+$('pay').addEventListener('input',()=>{
+ const pay=Number($('pay').value);
+ $('rate').textContent=Number.isFinite(pay)?'$'+(pay*1.4).toFixed(2)+'/hour • estimate only':'Enter an hourly wage';
+});
+async function refreshAll(){
+ if(!user)return;
+ const r=await api.from('skilllink_shifts').select('id,company_id,title,category,location,description,requirements,start_at,end_at,positions,pay_cents,status,created_at').order('start_at',{ascending:true}).limit(100);
+ if(r.error){$('browse-status').textContent='Pilot database setup needed: '+r.error.message;$('shift-cards').innerHTML='';return}
+ shifts=r.data||[];
+ const ids=shifts.map(s=>s.id);requests=[];
+ if(ids.length){
+  const q=await api.from('skilllink_shift_requests').select('id,shift_id,worker_id,worker_name,status,requested_at,clock_in_at,clock_out_at,company_approved_at').in('shift_id',ids).limit(500);
+  if(q.error){$('browse-status').textContent='Requests unavailable: '+q.error.message;return}
+  requests=q.data||[];
+ }
+ renderShifts();renderWorker();renderCompany();
+}
+function renderShifts(){
+ const category=$('category-filter').value,location=$('area-filter').value.trim().toLowerCase();
+ const available=shifts.filter(s=>s.status==='test_open'&&new Date(s.start_at)>new Date()
+  &&(category==='all'||s.category===category)&&(!location||s.location.toLowerCase().includes(location)));
+ $('browse-status').textContent=available.length+' test shift(s) match.';
+ $('shift-cards').innerHTML=available.map(s=>{
+ const own=s.company_id===user?.id,requested=requests.find(r=>r.shift_id===s.id&&r.worker_id===user?.id);
+ const assigned=requests.filter(r=>r.shift_id===s.id&&['assigned','completed'].includes(r.status)).length;
+ return '<article class="card"><span class="tag">TEST • '+esc(cat[s.category]||'Other')+'</span><h3>'+esc(s.title)+'</h3>'+
+ '<p>'+esc(s.description)+'</p><p class="muted">📍 '+esc(s.location)+'<br>🗓️ '+esc(fmt(s.start_at))+' – '+esc(fmt(s.end_at))+'</p>'+
+ '<p><strong>Worker pay: '+dollars(s.pay_cents)+'/hr</strong> · '+esc(s.positions)+' position(s) · '+esc(assigned)+' assigned</p>'+
+ (s.requirements?'<details><summary>Requirements</summary><p>'+esc(s.requirements)+'</p></details>':'')+
+ (own?'<p class="muted">Your company posted this test shift.</p>':requested?
+ '<p class="tag">Your request: '+esc(requested.status)+'</p>':
+ '<form data-request="'+esc(s.id)+'"><label>Your name for the company</label><input name="worker-name" minlength="2" maxlength="160" autocomplete="name" required placeholder="First and last name"><button type="submit">Request This Test Shift</button></form>')+
+ '</article>';
+ }).join('')||'<p>No matching test shifts yet. Companies can create a sample shift from their approved business account.</p>';
+}
+function renderWorker(){
+ if(!user)return;
+ const own=requests.filter(r=>r.worker_id===user.id),byId=Object.fromEntries(shifts.map(s=>[s.id,s]));
+ $('worker-list').innerHTML=own.length?own.map(r=>{
+ const s=byId[r.shift_id];if(!s)return '';
+ const inBtn=r.status==='assigned'&&!r.clock_in_at?'<button data-clock-in="'+esc(r.id)+'">Test Clock In</button>':'';
+ const outBtn=r.status==='assigned'&&r.clock_in_at&&!r.clock_out_at?'<button data-clock-out="'+esc(r.id)+'">Test Clock Out</button>':'';
+ return '<div class="card"><strong>'+esc(s.title)+'</strong> · <span class="tag">'+esc(r.status)+'</span><p>'+esc(s.location)+' · '+esc(fmt(s.start_at))+'</p>'+
+ (r.clock_in_at?'<p>Clock in: '+esc(fmt(r.clock_in_at))+'</p>':'')+
+ (r.clock_out_at?'<p>Clock out: '+esc(fmt(r.clock_out_at))+'</p>':'')+
+ (r.company_approved_at?'<p class="tag">Hours approved for TEST only</p>':'')+
+ '<div class="controls">'+inBtn+outBtn+'</div></div>';
+ }).join(''):'<p class="muted">No shift requests yet. Browse the test shifts above.</p>';
+}
+function renderCompany(){
+ if(company?.status!=='approved'||!user)return;
+ const own=shifts.filter(s=>s.company_id===user.id);
+ $('company-list').innerHTML=own.length?own.map(s=>{
+ const req=requests.filter(r=>r.shift_id===s.id);
+ const assigned=req.filter(r=>['assigned','completed'].includes(r.status)).length;
+ return '<article class="card"><h3>'+esc(s.title)+'</h3><p class="muted">'+esc(s.location)+' · '+esc(fmt(s.start_at))+' · '+esc(s.status)+'</p>'+
+ '<p>Worker wage: '+dollars(s.pay_cents)+'/hr · Estimated billed rate at 40% markup: '+dollars(Math.round(s.pay_cents*1.4))+'/hr (not an invoice)</p>'+
+ '<p>'+assigned+' assigned of '+s.positions+' test position(s)</p>'+
+ (req.length?req.map(r=>{
+ let buttons=r.status==='requested'?'<button data-assign="'+esc(r.id)+'">Assign for Test</button><button class="secondary" data-decline="'+esc(r.id)+'">Decline</button>':'';
+ if(r.status==='assigned'&&r.clock_in_at&&r.clock_out_at)buttons='<button data-approve="'+esc(r.id)+'">Approve Test Hours</button>';
+ const times=r.clock_in_at?'<p>Clock in: '+esc(fmt(r.clock_in_at))+(r.clock_out_at?' · Clock out: '+esc(fmt(r.clock_out_at)):'')+'</p>':'';
+ return '<div class="card"><strong>'+esc(r.worker_name)+'</strong> · <span class="tag">'+esc(r.status)+'</span>'+times+'<div class="controls">'+buttons+'</div></div>';
+ }).join(''):'<p class="muted">No worker requests yet.</p>')+'</article>';
+ }).join(''):'<p class="muted">No test shifts posted by your company.</p>';
+}
+$('shift-cards').addEventListener('submit',async e=>{
+ const form=e.target.closest('[data-request]');if(!form)return;e.preventDefault();if(!user)return;
+ const button=form.querySelector('button');button.disabled=true;
+ const {error}=await api.rpc('skilllink_request_test_shift',{p_shift_id:form.dataset.request,p_worker_name:form.elements['worker-name'].value.trim()});
+ $('browse-status').textContent=error?'Could not request shift: '+error.message:'Test shift requested. Company approval is required. No job is promised.';
+ if(error)button.disabled=false;else await refreshAll();
+});
+$('shift-form').addEventListener('submit',async e=>{
+ e.preventDefault();if(company?.status!=='approved')return;
+ const button=$('post-shift');button.disabled=true;$('post-status').textContent='Saving test shift…';
+ const pay=Math.round(Number($('pay').value)*100);
+ const start=new Date($('start').value),end=new Date($('end').value);
+ if(!Number.isSafeInteger(pay)||isNaN(start.valueOf())||isNaN(end.valueOf())){$('post-status').textContent='Check the hourly wage and dates.';button.disabled=false;return}
+ const {error}=await api.rpc('skilllink_create_test_shift',{
+ p_title:$('title').value.trim(),p_category:$('category').value,p_location:$('location').value.trim(),
+ p_description:$('description').value.trim(),p_requirements:$('requirements').value.trim(),
+ p_start_at:start.toISOString(),p_end_at:end.toISOString(),
+ p_positions:Number($('positions').value),p_pay_cents:pay
+ });
+ $('post-status').textContent=error?'Could not save test shift: '+error.message:'Test shift created. No real workers have been hired.';
+ button.disabled=false;if(!error){e.target.reset();await refreshAll()}
+});
+async function takeAction(id,op,approval){
+ const action=op==='assign'?'skilllink_assign_test_worker':op==='clock'?'skilllink_test_clock':'skilllink_approve_test_hours';
+ const args=op==='assign'?{p_request_id:id,p_accept:approval}:op==='clock'?{p_request_id:id,p_clock_in:approval}:{p_request_id:id};
+ const {error}=await api.rpc(action,args);
+ if(error){alert('Action failed: '+error.message);return}
+ await refreshAll();
+}
+$('company-list').addEventListener('click',async e=>{
+ const b=e.target.closest('button[data-assign],button[data-decline],button[data-approve]');if(!b)return;
+ if(b.dataset.approve&&!confirm('Approve recorded TEST hours? This does not initiate payroll.'))return;
+ b.disabled=true;
+ if(b.dataset.assign)await takeAction(b.dataset.assign,'assign',true);
+ else if(b.dataset.decline)await takeAction(b.dataset.decline,'assign',false);
+ else await takeAction(b.dataset.approve,'approve');
+});
+$('worker-list').addEventListener('click',async e=>{
+ const b=e.target.closest('button[data-clock-in],button[data-clock-out]');if(!b)return;
+ if(!confirm('Record a test clock event? No wages are owed or paid from this simulation.'))return;
+ b.disabled=true;
+ if(b.dataset.clockIn)await takeAction(b.dataset.clockIn,'clock',true);
+ else await takeAction(b.dataset.clockOut,'clock',false);
+});
+if(api){api.auth.onAuthStateChange((e)=>{if(e==='SIGNED_IN'||e==='SIGNED_OUT')setTimeout(boot,0)});boot().catch(e=>msg('Unable to load: '+e.message))}
+else msg('Unable to connect to the sign-in service.');
+</script></body></html>
