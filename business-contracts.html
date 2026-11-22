@@ -25,7 +25,7 @@
 <div id="opening-list"></div>
 </section>
 <section id="applicants" class="hidden"><h2>Company Hiring Dashboard</h2>
-<p class="muted">Review applicants, filter by hiring stage, and keep track of their progress. Applications are private to your approved company. Changing a status is internal tracking only; it does not send a message, schedule an interview, or make a job offer.</p>
+<p class="muted">Review applicants, filter by hiring stage, and keep track of their progress. The hiring company and authorized Skill Link staff can review applications shared with them. Changing a status is internal tracking only; it does not send a message, schedule an interview, or make a job offer.</p>
 <div class="hiring-summary" id="hiring-summary" aria-label="Applicant totals"></div>
 <div class="grid"><div><label for="applicant-filter">Show applicants</label>
 <select id="applicant-filter"><option value="all">All applicants</option><option value="new">New</option><option value="under_review">Under Review</option><option value="interview">Interview</option><option value="hired">Hired</option><option value="not_selected">Not Selected</option></select></div>
@@ -57,7 +57,7 @@ async function startup(){
  else{$('company-status').textContent=company.company_name+' — '+company.status+(company.status==='pending'?'. Skill Link must approve your application.':'');}
  $('post').classList.toggle('hidden',company?.status!=='approved');$('hiring').classList.toggle('hidden',company?.status!=='approved');$('applicants').classList.toggle('hidden',company?.status!=='approved');
  const check=await client.rpc('is_skilllink_admin');admin=check.data===true&&!check.error;
- if(admin){$('admin').classList.remove('hidden');await loadAdmin()}
+ if(admin){$('applicants').classList.remove('hidden');$('admin').classList.remove('hidden');await loadAdmin()}
  await Promise.all([loadBoard(),loadFees(),loadOpenings(),loadApplicants()]);
 }
 $('login').addEventListener('click',async()=>{if(!client)return;notice('Signing in…');const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});notice(error?'Sign-in failed: '+error.message:'Signed in.');if(!error)await startup()});
@@ -100,13 +100,11 @@ $('applicants-refresh').addEventListener('click',loadApplicants);
 $('applicant-filter').addEventListener('change',renderApplicants);
 $('applicant-search').addEventListener('input',renderApplicants);
 async function loadApplicants(){
- if(company?.status!=='approved'||!user){applicantRows=[];$('applicants-list').innerHTML='';$('hiring-summary').innerHTML='';return}
- const openings=await client.from('company_job_openings').select('id,title').eq('company_id',user.id).limit(200);
- if(openings.error){$('applicants-status').textContent='Setup required: '+openings.error.message;return}
- applicantJobNames=Object.fromEntries((openings.data||[]).map(j=>[j.id,j.title]));
- const {data,error}=await client.from('company_worker_applications')
- .select('id,opening_id,full_name,email,phone,city,experience,availability,message,review_status,created_at')
- .eq('company_id',user.id).order('created_at',{ascending:false}).limit(100);
+ if((company?.status!=='approved'&&!admin)||!user){applicantRows=[];$('applicants-list').innerHTML='';$('hiring-summary').innerHTML='';return}
+ let query=client.from('company_worker_applications').select('*,company_job_openings(title)');
+ if(!admin)query=query.eq('company_id',user.id);
+ const {data,error}=await query.order('created_at',{ascending:false}).limit(100);
+ applicantJobNames=Object.fromEntries((data||[]).map(a=>[a.opening_id,a.company_job_openings?.title]));
  if(error){$('applicants-status').textContent='Hiring dashboard setup required: '+error.message;$('applicants-list').innerHTML='';return}
  applicantRows=data||[];renderApplicants();
 }
@@ -128,13 +126,28 @@ function renderApplicants(){
  '<p><strong>City:</strong> '+escapeHTML(a.city)+'</p><p><strong>Experience:</strong> '+escapeHTML(a.experience)+'</p>'+
  '<p><strong>Availability:</strong> '+escapeHTML(a.availability)+'</p>'+
  (a.message?'<p><strong>Notes:</strong> '+escapeHTML(a.message)+'</p>':'')+'</details>'+
- '<div class="applicant-actions"><label for="stage-'+escapeHTML(a.id)+'">Hiring stage</label>'+
+ (a.has_resume?'<button type="button" data-resume="'+escapeHTML(a.id)+'">Download résumé (PDF)</button>':'')+
+ (a.company_id===user.id?'<div class="applicant-actions"><label for="stage-'+escapeHTML(a.id)+'">Hiring stage</label>'+
  '<select id="stage-'+escapeHTML(a.id)+'" data-application-status="'+escapeHTML(a.id)+'">'+options+'</select>'+
- '<button type="button" data-save-application="'+escapeHTML(a.id)+'">Save Stage</button></div>'+
+ '<button type="button" data-save-application="'+escapeHTML(a.id)+'">Save Stage</button></div>':'')+
  '<small>Submitted: '+escapeHTML(new Date(a.created_at).toLocaleString())+'</small></article>';
  }).join(''):'<p class="muted">No applicants match this filter.</p>';
 }
 $('applicants-list').addEventListener('click',async e=>{
+ const download=e.target.closest('[data-resume]');
+ if(download){
+  download.disabled=true;
+  try {
+   const {data,error}=await client.from('company_application_resumes').select('content').eq('application_id',download.dataset.resume).single();
+   if(error)throw error;
+   const bytes=Uint8Array.from(atob(data.content),c=>c.charCodeAt(0));
+   const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+   const link=document.createElement('a');link.href=url;link.download='resume-'+download.dataset.resume+'.pdf';
+   document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  } catch { $('applicants-status').textContent='Unable to download the résumé. Please try again.'; }
+  finally { download.disabled=false; }
+  return;
+ }
  const button=e.target.closest('[data-save-application]');if(!button||company?.status!=='approved'||!user)return;
  const id=button.dataset.saveApplication;
  const dropdown=$('applicants-list').querySelector('[data-application-status="'+id+'"]');
