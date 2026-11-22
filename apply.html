@@ -4,7 +4,7 @@
 <style>
 :root{font-family:system-ui,-apple-system,sans-serif;color:#183448;background:#f3f7fa}*{box-sizing:border-box}body{margin:0}header{background:#102c42;color:white;padding:18px 5%;display:flex;justify-content:space-between;align-items:center}header a{color:white}main{max-width:700px;margin:25px auto;padding:0 14px}section{background:#fff;border:1px solid #d9e5eb;padding:22px;border-radius:15px;margin:16px 0}h1{font-size:clamp(26px,5vw,36px)}p{line-height:1.5}.muted{color:#5d7382}label{display:block;font-weight:700;margin:15px 0 5px}input,textarea{font:inherit;padding:12px;width:100%;border:1px solid #b7cad5;border-radius:9px}textarea{min-height:110px}button{font:inherit;background:#0b9777;color:white;border:0;border-radius:10px;padding:13px 18px;font-weight:750;cursor:pointer}button:disabled{opacity:.5}.notice{padding:13px;border-radius:10px;background:#eaf6f2}.error{color:#b52e23}.hidden{display:none!important}.agree{display:flex;gap:10px;align-items:flex-start;line-height:1.5}.agree input{width:20px;height:20px;flex-shrink:0;margin:3px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}@media(max-width:650px){.grid{grid-template-columns:1fr}section{padding:16px}}
 </style></head><body><header><strong>Skill Link Worldwide</strong><a href="/">Home</a></header><main>
-<h1>Apply for a Job</h1><p class="muted">Submit your application directly to the company named below through its private Skill Link account. Applying is free. Skill Link is in testing and does not guarantee employment.</p>
+<h1>Apply for a Job</h1><p class="muted">Submit one application to Skill Link and the hiring company named below. Applying is free. Skill Link is in testing and does not guarantee employment.</p>
 <section><h2 id="job-title">Loading job opportunity…</h2><p id="job-company"></p><p id="job-location" class="muted"></p><p id="job-description"></p><p id="job-status" role="status"></p></section>
 <section id="application" class="hidden"><h2>Your application</h2><p class="muted">Only provide information you are comfortable sharing with the company. Do not include Social Security numbers, bank details, ID photos, or other sensitive documents.</p>
 <form id="apply-form">
@@ -16,8 +16,9 @@
 </div>
 <label for="experience">Relevant skills and work experience</label><textarea id="experience" minlength="3" maxlength="2000" required placeholder="Describe your experience and qualifications"></textarea>
 <label for="availability">When are you available to start?</label><input id="availability" maxlength="250" required placeholder="Immediately, next week, weekdays…">
+<label for="resume">Résumé (optional)</label><input id="resume" type="file" accept=".pdf,application/pdf" aria-describedby="resume-help"><small id="resume-help">PDF, up to 2 MB. The company reviewing this application can download your résumé.</small>
 <label for="extra">Anything else you'd like the company to know? (optional)</label><textarea id="extra" maxlength="2000"></textarea>
-<label class="agree"><input type="checkbox" id="consent" required><span>I agree that Skill Link can share this application, including my contact details, with <strong id="consent-company">the company</strong> for its hiring review. I understand this does not guarantee a job.</span></label>
+<label class="agree"><input type="checkbox" id="consent" required><span>I agree that authorized Skill Link staff can review my application, contact details and any attached résumé, and share them with <strong id="consent-company">the company</strong> for its hiring review. I understand this does not guarantee a job.</span></label>
 <button id="submit" type="submit">Send Application to Company</button>
 <p id="form-status" role="status" aria-live="polite"></p>
 </form></section></main>
@@ -39,13 +40,26 @@ async function load(){
 $('apply-form').addEventListener('submit',async event=>{
  event.preventDefault();if(!client||!opening)return;
  const button=$('submit');button.disabled=true;$('form-status').textContent='Submitting…';
- const {error}=await client.rpc('submit_company_worker_application',{
+ try {
+ const file=$('resume').files[0];
+ const fields={
  p_opening_id:opening,p_full_name:$('full-name').value.trim(),p_email:$('contact-email').value.trim(),
  p_phone:$('phone').value.trim(),p_city:$('city').value.trim(),p_experience:$('experience').value.trim(),
  p_availability:$('availability').value.trim(),p_message:$('extra').value.trim(),p_consent:$('consent').checked
- });
- if(error){$('form-status').textContent='Could not submit: '+error.message;button.disabled=false;return}
- $('application').innerHTML='<h2>Application submitted</h2><p class="notice">Thank you. Your application is now available in the named company’s private Skill Link applicant inbox. The company may contact you using the details you provided. No email confirmation is promised.</p>';
+ };
+ if(file){
+  if(!/\.pdf$/i.test(file.name)||file.size>2*1024*1024||file.size<5)
+   throw new Error('Choose a PDF up to 2 MB.');
+  const bytes=new Uint8Array(await file.arrayBuffer());
+  if(String.fromCharCode(...bytes.slice(0,5))!=='%PDF-')throw new Error('Choose a valid PDF file.');
+  let binary='';
+  for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  fields.p_resume=btoa(binary);
+ }
+ const {error}=await client.rpc('submit_shared_worker_application',{...fields,p_resume:fields.p_resume??null});
+ if(error)throw error;
+ } catch(error){$('form-status').textContent='Could not submit: '+error.message;button.disabled=false;return}
+ $('application').innerHTML='<h2>Application submitted</h2><p class="notice">Thank you. Your application is now available to Skill Link and the named company in their private dashboards. The company may contact you using the details you provided. No email confirmation is promised.</p>';
 });
 load().catch(()=>{$('job-status').textContent='Unable to load this application right now.'});
 </script></body></html>
