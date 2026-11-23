@@ -189,9 +189,9 @@ async function loadWorkerShiftSummary() {
    safe(time(nextShift.start_at)) + ' – ' + safe(time(nextShift.end_at)) + '<br>' + safe(nextShift.location) :
    'No assigned shift on your schedule.';
   summary.innerHTML = '<div class="steps"><article class="tile"><h3>' +
-   (nextShift && Date.parse(nextShift.start_at) <= now ? 'Current shift' : 'Next assigned shift') +
+   (nextShift && Date.parse(nextShift.start_at) <= now ? 'Current shift' : 'Your next shift') +
    '</h3><p>' + shiftText + '</p><a href="/shifts.html#worker">My shifts</a></article>' +
-   '<article class="tile"><h3>Estimated shift earnings</h3><p><strong>' + money(earnedCents) +
+   '<article class="tile"><h3>Estimated test earnings</h3><p><strong>' + money(earnedCents) +
    '</strong></p><small>All completed pilot shifts · recorded hours × hourly rate. Test amounts only.</small>' +
    (missingTime ? '<p>Some completed shifts have incomplete records and are excluded.</p>' : '') + '</article></div>';
  } catch {
