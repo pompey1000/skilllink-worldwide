@@ -31,14 +31,39 @@ body:not(.portal-worker):not(.portal-customer) .quick-access{display:none}
 body:not(.portal-worker):not(.portal-customer) .hero{padding:28px 0 20px}
 body:not(.portal-worker):not(.portal-customer) .role-entrance{margin-top:0}
 @media(max-width:750px){body:not(.portal-worker):not(.portal-customer) .role-entrance-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.role-entrance-grid strong{font-size:14px}.role-entrance-grid a{padding:12px 8px}.role-entrance-grid span{font-size:12px}}
+
+.launch-home{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(230px,1fr);margin:24px 0;border:1px solid #d1e2dc;border-radius:20px;overflow:hidden;background:white}
+.launch-intro{background:#113848;color:white;padding:clamp(24px,4vw,52px)}
+.launch-intro .eyebrow{color:#9ce7c9}.launch-intro h1{font-size:clamp(32px,5vw,58px);line-height:1.05;color:white;margin:14px 0}
+.launch-intro p{max-width:43ch;line-height:1.55}.launch-intro small{display:block;color:#daeae5;line-height:1.45}
+.launch-actions{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 14px}
+.launch-actions a{border:1px solid #8bd8ba;padding:12px 18px;border-radius:9px;text-decoration:none;font-weight:700;color:white}
+.launch-actions a:first-child{background:#9ce7c9;color:#10382e}
+.launch-home aside{align-self:center;padding:24px}.launch-home aside h2{margin:0 0 10px;font-size:22px}
+.launch-home aside a{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid #dbe8e3;text-decoration:none}
+.launch-home a:hover{text-decoration:underline}.launch-home a:focus-visible{outline:3px solid #da9717;outline-offset:2px}
+@media(max-width:700px){.launch-home{grid-template-columns:1fr;margin:12px 0}.launch-home aside{padding:18px 24px}}
 </style></head><body>
 <header><strong>Skill Link <span>Worldwide</span></strong><a class="top-login" href="#account">🔐 Sign In / Sign Up</a><nav><a href="#account" class="profile-link">Account</a><a href="/?view=customer#account" class="profile-link">Customer Dashboard</a><a href="#bookings" class="profile-link">Manage Bookings</a><a href="#my-profile" class="profile-link">👤 My Profile</a><a href="#services">Services</a><a href="/shifts.html">Shift Marketplace</a><a href="/business-contracts.html">Business Contracts</a><a href="#for-businesses">For Businesses</a><a href="#worker-notifications">🔔 Alerts</a><a href="/?view=worker#account">Worker Dashboard</a><a href="#inbox">Messages</a><a href="#directory">Workers</a><a href="#jobs">Requests</a><a href="#how">How it works</a><a href="#faq">FAQ</a></nav></header>
-<main><section class="hero"><div><div class="eyebrow">Built on Love. Connected by Skill.</div><h1>Skill Link.<br>Work that respects people.</h1><p class="lead">Welcome to Skill Link. Find experienced local people when you need help, or share your skills and find work. Your time, your experience, and your well-being matter here.</p><div class="actions"><a class="btn" href="/shifts.html" style="text-decoration:none">Browse Shifts · Pilot</a><a class="btn alt" href="/?view=worker#account" style="text-decoration:none">Worker Account</a><a class="btn alt" href="/?view=customer#account" style="text-decoration:none">Find Help</a></div><p class="muted">Clear prices. Local first.</p><div class="stats"><div><b>Local</b>Community-first</div><div><b>Simple</b>Post your need</div><div><b>Flexible</b>Set your price</div></div></div><div class="hero-art"><div class="symbol">🛠️</div><h2>People helping people.</h2><p>Built around respect, clear communication, and care for the person behind every job.</p><div style="font-size:38px">🔧 ⚡ 🪚 🚗</div></div></section><section class="role-entrance" aria-label="Choose your Skill Link account">
-<h2>What brings you to Skill Link?</h2><div class="role-entrance-grid">
-<a href="/shifts.html"><strong>🛠️ Pick a Shift</strong><span>Browse test warehouse and support shifts, request a shift and track its status</span></a>
-<a href="/shifts.html#company"><strong>🏢 Businesses · Shift Pilot</strong><span>Approved companies can test posting shifts and reviewing requests</span></a>
-<a href="/?view=customer#account"><strong>👤 Find Help</strong><span>Sign in, find a worker and manage requests</span></a>
-</div><p class="muted">Shift marketplace is for testing only until Skill Link completes business setup, payroll, insurance and agreements. No wages or payments are active.</p></section>
+<main>
+<section class="launch-home" aria-labelledby="launch-heading">
+  <div class="launch-intro">
+    <div class="eyebrow">Charlotte metro · Staffing pilot</div>
+    <h1 id="launch-heading">Work in the Charlotte area.</h1>
+    <p>Explore the shift marketplace or register your company to request workers.</p>
+    <div class="launch-actions">
+      <a href="/shifts.html">Find work</a>
+      <a href="/business-contracts.html#auth">Hire workers</a>
+    </div>
+    <small>Shifts are for testing. Paid placements haven’t started.</small>
+  </div>
+  <aside aria-label="Other ways to use Skill Link">
+    <h2>Local services</h2>
+    <a href="/?view=customer#account">Find help with a job <span aria-hidden="true">→</span></a>
+    <a href="/?view=worker#account">Offer your skills <span aria-hidden="true">→</span></a>
+    <a href="/?view=worker#worker-dashboard">Open worker dashboard <span aria-hidden="true">→</span></a>
+  </aside>
+</section>
 <section class="section" id="account"><div class="eyebrow">Account access · Early testing</div><h2>Welcome. Start where you are.</h2><p>Create an account or sign in to find help or share your skills. Tell us about your experience; add credentials where applicable. Skill Link is still in testing.</p><div class="authpanel"><div id="signedout"><div class="formgrid"><div><label for="auth-email">Email address</label><input id="auth-email" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com"></div><div><label for="auth-password">Password (at least 8 characters)</label><input id="auth-password" type="password" autocomplete="current-password" minlength="8" placeholder="Your password"></div></div><button class="btn" type="button" id="signup-btn">Create account</button><button class="btn alt" type="button" id="signin-btn">Sign in</button><button class="btn alt" type="button" id="forgot-btn">Forgot password?</button></div><div id="reset-panel" class="hide"><label for="reset-password">Choose a new password (at least 8 characters)</label><input id="reset-password" type="password" minlength="8" autocomplete="new-password" placeholder="New password"><button class="btn" type="button" id="reset-save-btn">Save new password</button></div><div id="signedin" class="hide"><p id="account-email"></p><button class="btn alt" type="button" id="signout-btn">Sign out</button></div><p class="authstatus" id="auth-status" role="status" aria-live="polite">Connecting to secure sign-in…</p></div><div class="account-choices"><a class="btn" href="#find-jobs">🔎 Find Work</a><a class="btn alt" href="#directory">🛠️ Need a Worker</a><a class="btn alt" href="/?view=worker#account">Worker Account</a><a class="btn alt" href="/?view=customer#account">Customer Account</a><a class="btn alt" href="/business-contracts.html#auth">Company Account</a></div></section>
 <section class="quick-access" aria-label="Quick account access"><h2>Go straight to your account</h2><div class="quick-grid"><a href="#account">🔐 Log in / Sign up</a><a href="/?view=customer#account">👤 Customer Account</a><a href="/?view=worker#account">🛠️ Worker Account</a><a href="/business-contracts.html#auth">🏢 Company Account</a><a href="#bookings">📅 My Bookings</a><a href="#inbox">💬 Messages</a><a href="#worker-notifications">🔔 Job Alerts</a><a href="#my-profile">⚙️ My Profile</a></div></section>
 <section class="section hide" id="admin-companies" aria-label="Company approval administration"><div class="eyebrow">Owner administration</div><h2>Company approvals</h2><p>Review hiring applications before letting businesses participate. Only accounts authorized in Supabase can use these controls.</p><div class="actions"><button class="btn alt" type="button" id="admin-companies-refresh">Refresh applications</button></div><p id="admin-companies-status" role="status" aria-live="polite" class="muted"></p><div id="admin-companies-list" class="jobs"></div></section>
