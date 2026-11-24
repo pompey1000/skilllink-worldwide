@@ -37,7 +37,7 @@
 <section id="post" class="hidden"><h2>Post a contract</h2><p class="muted">Describe the staffing or project need. Do not include private information about workers.</p><form id="contract-form"><div class="grid"><div><label>Contract title</label><input name="title" required minlength="5" maxlength="160" placeholder="Warehouse shift staffing"></div><div><label>Location</label><input name="city" required maxlength="160" placeholder="Charlotte, NC"></div><div><label>Positions / skills</label><input name="roles" required maxlength="300" placeholder="Forklift operators"></div><div><label>Number of workers</label><input name="count" type="number" min="1" max="10000" value="1" required></div><div><label>Type</label><select name="kind"><option value="temporary">Temporary staffing</option><option value="permanent">Permanent hiring</option><option value="project">Project contract</option></select></div><div><label>Budget in USD (optional)</label><input name="budget" type="number" step=".01" min="1" max="100000000"></div></div><label>Full description</label><textarea name="description" required minlength="10" maxlength="3000"></textarea><button type="submit">Publish contract</button></form><p id="post-status" role="status"></p></section>
 <section id="fees"><h2>Skill Link fee tracker</h2><p>Skill Link proposes a <strong>10% platform fee</strong> on the selected company bid. Every new proposal stays <strong>Pending fee agreement</strong> until written terms are accepted. No charges, invoices, or payments are enabled. The separate $500 temp-to-permanent conversion fee is not automatically added.</p><div id="fee-list"><p class="muted">Sign in to view contracts involving your company.</p></div></section>
 <section id="admin" class="hidden"><h2>Owner: company approvals</h2><p class="muted">Only authorized Skill Link administrators can approve company access.</p><button id="admin-refresh" class="alt">Refresh applications</button><div id="admin-list"></div></section>
-</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
+</main><script src="/application-resume.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 const $=id=>document.getElementById(id), escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])), money=c=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(c)/100);
 let client=null,user=null,company=null,admin=false;
 if(window.supabase)client=window.supabase.createClient('https://iiaskaknyfenglihfrpo.supabase.co','sb_publishable_W21KLGIbvYUAQuE4Sgvs9A_pKK5SaWT');
@@ -105,7 +105,7 @@ async function loadApplicants(){
  if(openings.error){$('applicants-status').textContent='Setup required: '+openings.error.message;return}
  applicantJobNames=Object.fromEntries((openings.data||[]).map(j=>[j.id,j.title]));
  const {data,error}=await client.from('company_worker_applications')
- .select('id,opening_id,full_name,email,phone,city,experience,availability,message,review_status,created_at')
+ .select('id,opening_id,full_name,email,phone,city,experience,availability,message,review_status,created_at,application_resumes(id)')
  .eq('company_id',user.id).order('created_at',{ascending:false}).limit(100);
  if(error){$('applicants-status').textContent='Hiring dashboard setup required: '+error.message;$('applicants-list').innerHTML='';return}
  applicantRows=data||[];renderApplicants();
@@ -126,6 +126,7 @@ function renderApplicants(){
  '<p><strong>Contact:</strong> <a href="mailto:'+encodeURIComponent(a.email)+'">'+escapeHTML(a.email)+'</a> · '+escapeHTML(a.phone)+'</p>'+
  '<details><summary>View experience and availability</summary>'+
  '<p><strong>City:</strong> '+escapeHTML(a.city)+'</p><p><strong>Experience:</strong> '+escapeHTML(a.experience)+'</p>'+
+ (a.application_resumes?'<button type="button" data-resume="'+escapeHTML(a.application_resumes.id)+'">Download résumé</button>':'')+
  '<p><strong>Availability:</strong> '+escapeHTML(a.availability)+'</p>'+
  (a.message?'<p><strong>Notes:</strong> '+escapeHTML(a.message)+'</p>':'')+'</details>'+
  '<div class="applicant-actions"><label for="stage-'+escapeHTML(a.id)+'">Hiring stage</label>'+
@@ -134,6 +135,7 @@ function renderApplicants(){
  '<small>Submitted: '+escapeHTML(new Date(a.created_at).toLocaleString())+'</small></article>';
  }).join(''):'<p class="muted">No applicants match this filter.</p>';
 }
+enableResumeDownloads($('applicants-list'),client);
 $('applicants-list').addEventListener('click',async e=>{
  const button=e.target.closest('[data-save-application]');if(!button||company?.status!=='approved'||!user)return;
  const id=button.dataset.saveApplication;

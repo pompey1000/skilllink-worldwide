@@ -34,7 +34,7 @@
 <h2>Manage test shifts & workers</h2><div id="company-list"></div></section>
 <section><h2>Worker benefits resources</h2><p>Workers can explore independently offered health coverage on <a href="https://www.healthcare.gov/" target="_blank" rel="noopener noreferrer">HealthCare.gov</a>. Skill Link does not enroll workers or pay optional premiums through this link. Employer obligations would still need separate arrangements.</p></section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
+<script src="/application-resume.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=v=>new Date(v).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'});
@@ -74,7 +74,7 @@ async function refreshAll(){
  shifts=r.data||[];
  const ids=shifts.map(s=>s.id);requests=[];
  if(ids.length){
-  const q=await api.from('skilllink_shift_requests').select('id,shift_id,worker_id,worker_name,status,requested_at,clock_in_at,clock_out_at,company_approved_at').in('shift_id',ids).limit(500);
+  const q=await api.from('skilllink_shift_requests').select('id,shift_id,worker_id,worker_name,status,requested_at,clock_in_at,clock_out_at,company_approved_at,experience,application_resumes(id)').in('shift_id',ids).limit(500);
   if(q.error){$('browse-status').textContent='Requests unavailable: '+q.error.message;return}
   requests=q.data||[];
  }
@@ -94,7 +94,7 @@ function renderShifts(){
  (s.requirements?'<details><summary>Requirements</summary><p>'+esc(s.requirements)+'</p></details>':'')+
  (own?'<p class="muted">Your company posted this test shift.</p>':requested?
  '<p class="tag">Your request: '+esc(requested.status)+'</p>':
- '<form data-request="'+esc(s.id)+'"><label>Your name for the company</label><input name="worker-name" minlength="2" maxlength="160" autocomplete="name" required placeholder="First and last name"><button type="submit">Request This Test Shift</button></form>')+
+ '<form data-request="'+esc(s.id)+'"><label>Your name for the company</label><input name="worker-name" minlength="2" maxlength="160" autocomplete="name" required placeholder="First and last name"><label>Tell us about your relevant experience (optional)<textarea name="experience" maxlength="2000" placeholder="For warehouse shifts, mention tasks such as picking, packing or receiving."></textarea></label><label>Attach your résumé (optional)<input type="file" name="resume" accept=".pdf,application/pdf"></label><small>PDF up to 2 MB. The hiring company can review your experience and download your résumé.</small><button type="submit">Request This Test Shift</button></form>')+
  '</article>';
  }).join('')||'<p>No matching test shifts yet. Companies can create a sample shift from their approved business account.</p>';
 }
@@ -125,16 +125,20 @@ function renderCompany(){
  let buttons=r.status==='requested'?'<button data-assign="'+esc(r.id)+'">Assign for Test</button><button class="secondary" data-decline="'+esc(r.id)+'">Decline</button>':'';
  if(r.status==='assigned'&&r.clock_in_at&&r.clock_out_at)buttons='<button data-approve="'+esc(r.id)+'">Approve Test Hours</button>';
  const times=r.clock_in_at?'<p>Clock in: '+esc(fmt(r.clock_in_at))+(r.clock_out_at?' · Clock out: '+esc(fmt(r.clock_out_at)):'')+'</p>':'';
- return '<div class="card"><strong>'+esc(r.worker_name)+'</strong> · <span class="tag">'+esc(r.status)+'</span>'+times+'<div class="controls">'+buttons+'</div></div>';
+ return '<div class="card"><strong>'+esc(r.worker_name)+'</strong> · <span class="tag">'+esc(r.status)+'</span>'+times+(r.experience?'<p>Experience: '+esc(r.experience)+'</p>':'')+(r.application_resumes?'<button type="button" data-resume="'+esc(r.application_resumes.id)+'">Download résumé</button>':'')+'<div class="controls">'+buttons+'</div></div>';
  }).join(''):'<p class="muted">No worker requests yet.</p>')+'</article>';
  }).join(''):'<p class="muted">No test shifts posted by your company.</p>';
 }
 $('shift-cards').addEventListener('submit',async e=>{
  const form=e.target.closest('[data-request]');if(!form)return;e.preventDefault();if(!user)return;
  const button=form.querySelector('button');button.disabled=true;
- const {error}=await api.rpc('skilllink_request_test_shift',{p_shift_id:form.dataset.request,p_worker_name:form.elements['worker-name'].value.trim()});
+ try {
+ const pdf=await readResume(form.elements.resume);
+ const experience=form.elements.experience.value.trim();
+ const {error}=await api.rpc('request_shift_with_experience',{p_experience:experience,p_pdf:pdf,p_shift_id:form.dataset.request,p_worker_name:form.elements['worker-name'].value.trim()});
  $('browse-status').textContent=error?'Could not request shift: '+error.message:'Test shift requested. Company approval is required. No job is promised.';
  if(error)button.disabled=false;else await refreshAll();
+ }catch(error){$('browse-status').textContent=error.message;button.disabled=false}
 });
 $('shift-form').addEventListener('submit',async e=>{
  e.preventDefault();if(company?.status!=='approved')return;
@@ -173,6 +177,7 @@ $('worker-list').addEventListener('click',async e=>{
  if(b.dataset.clockIn)await takeAction(b.dataset.clockIn,'clock',true);
  else await takeAction(b.dataset.clockOut,'clock',false);
 });
+enableResumeDownloads($('company-list'),api);
 if(api){api.auth.onAuthStateChange((e)=>{if(e==='SIGNED_IN'||e==='SIGNED_OUT')setTimeout(boot,0)});boot().catch(e=>msg('Unable to load: '+e.message))}
 else msg('Unable to connect to the sign-in service.');
 </script></body></html>
