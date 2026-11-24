@@ -14,14 +14,15 @@
 <div><label for="phone">Phone number</label><input id="phone" type="tel" minlength="7" maxlength="40" autocomplete="tel" required></div>
 <div><label for="city">City / state</label><input id="city" maxlength="160" autocomplete="address-level2" placeholder="Charlotte, NC" required></div>
 </div>
-<label for="experience">Relevant skills and work experience</label><textarea id="experience" minlength="3" maxlength="2000" required placeholder="Describe your experience and qualifications"></textarea>
+<label for="experience">Relevant skills and work experience</label><textarea id="experience" minlength="3" maxlength="2000" required placeholder="For warehouse roles, include tasks such as picking, packing or receiving."></textarea>
+<label for="resume">Attach your résumé (optional)</label><input id="resume" type="file" accept=".pdf,application/pdf"><small>PDF up to 2 MB. The hiring company can download it with your application.</small>
 <label for="availability">When are you available to start?</label><input id="availability" maxlength="250" required placeholder="Immediately, next week, weekdays…">
 <label for="extra">Anything else you'd like the company to know? (optional)</label><textarea id="extra" maxlength="2000"></textarea>
 <label class="agree"><input type="checkbox" id="consent" required><span>I agree that Skill Link can share this application, including my contact details, with <strong id="consent-company">the company</strong> for its hiring review. I understand this does not guarantee a job.</span></label>
 <button id="submit" type="submit">Send Application to Company</button>
 <p id="form-status" role="status" aria-live="polite"></p>
 </form></section></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/application-resume.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search),opening=params.get('opening');
@@ -39,13 +40,17 @@ async function load(){
 $('apply-form').addEventListener('submit',async event=>{
  event.preventDefault();if(!client||!opening)return;
  const button=$('submit');button.disabled=true;$('form-status').textContent='Submitting…';
- const {error}=await client.rpc('submit_company_worker_application',{
+ try {
+ const pdf=await readResume($('resume'));
+ const {error}=await client.rpc(pdf?'submit_company_application_with_resume':'submit_company_worker_application',{
+ ...(pdf?{p_pdf:pdf}:{}),
  p_opening_id:opening,p_full_name:$('full-name').value.trim(),p_email:$('contact-email').value.trim(),
  p_phone:$('phone').value.trim(),p_city:$('city').value.trim(),p_experience:$('experience').value.trim(),
  p_availability:$('availability').value.trim(),p_message:$('extra').value.trim(),p_consent:$('consent').checked
  });
  if(error){$('form-status').textContent='Could not submit: '+error.message;button.disabled=false;return}
  $('application').innerHTML='<h2>Application submitted</h2><p class="notice">Thank you. Your application is now available in the named company’s private Skill Link applicant inbox. The company may contact you using the details you provided. No email confirmation is promised.</p>';
+ } catch(error){$('form-status').textContent=error.message;button.disabled=false}
 });
 load().catch(()=>{$('job-status').textContent='Unable to load this application right now.'});
 </script></body></html>
