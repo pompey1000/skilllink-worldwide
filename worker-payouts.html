@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Worker payouts | Skill Link Worldwide</title>
+  <style>
+    body {max-width:52rem;margin:auto;padding:2rem 1.25rem;font:1rem/1.55 system-ui;color:#183047;background:#f5f8fb}
+    section {background:white;padding:1.25rem;margin:1rem 0;border-radius:.65rem}
+    a {color:#087066} h2 {margin:0}
+  </style>
+</head>
+<body>
+  <a href="index.html#account">Back to my account</a>
+  <h1>Worker payouts</h1>
+  <section><h2>Warehouse shifts</h2><p>Warehouse pay is planned weekly.</p></section>
+  <section>
+    <h2>Personal jobs</h2>
+    <p>Keep your scheduled bank deposit or choose an instant payout when eligible. You cover the instant payout fee. Review the fee and the amount you’ll receive before confirming.</p>
+    <strong>Test mode · No real funds</strong>
+    <p id="status" role="status">Loading payout details…</p>
+    <div id="payouts"></div>
+  </section>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script type="module" src="worker-payouts.js"></script>
+</body>
+</html>
