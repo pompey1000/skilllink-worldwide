@@ -15,6 +15,7 @@
 <div><label for="city">City / state</label><input id="city" maxlength="160" autocomplete="address-level2" placeholder="Charlotte, NC" required></div>
 </div>
 <label for="experience">Relevant skills and work experience</label><textarea id="experience" minlength="3" maxlength="2000" required placeholder="Describe your experience and qualifications"></textarea>
+<label class="agree hidden" id="resume-choice"><input id="share-resume" type="checkbox">Include my saved résumé with this application</label>
 <label for="availability">When are you available to start?</label><input id="availability" maxlength="250" required placeholder="Immediately, next week, weekdays…">
 <label for="extra">Anything else you'd like the company to know? (optional)</label><textarea id="extra" maxlength="2000"></textarea>
 <label class="agree"><input type="checkbox" id="consent" required><span>I agree that Skill Link can share this application, including my contact details, with <strong id="consent-company">the company</strong> for its hiring review. I understand this does not guarantee a job.</span></label>
@@ -39,7 +40,7 @@ async function load(){
 $('apply-form').addEventListener('submit',async event=>{
  event.preventDefault();if(!client||!opening)return;
  const button=$('submit');button.disabled=true;$('form-status').textContent='Submitting…';
- const {error}=await client.rpc('submit_company_worker_application',{
+ const {error}=await client.rpc($('share-resume').checked ? 'submit_application_with_resume' : 'submit_company_worker_application',{
  p_opening_id:opening,p_full_name:$('full-name').value.trim(),p_email:$('contact-email').value.trim(),
  p_phone:$('phone').value.trim(),p_city:$('city').value.trim(),p_experience:$('experience').value.trim(),
  p_availability:$('availability').value.trim(),p_message:$('extra').value.trim(),p_consent:$('consent').checked
@@ -47,5 +48,15 @@ $('apply-form').addEventListener('submit',async event=>{
  if(error){$('form-status').textContent='Could not submit: '+error.message;button.disabled=false;return}
  $('application').innerHTML='<h2>Application submitted</h2><p class="notice">Thank you. Your application is now available in the named company’s private Skill Link applicant inbox. The company may contact you using the details you provided. No email confirmation is promised.</p>';
 });
+async function fillSavedExperience(){
+ const {data:{session}} = await client.auth.getSession();
+ if(!session) return;
+ const {data} = await client.from('worker_application_profiles').select('experience,has_resume')
+   .eq('worker_id',session.user.id).maybeSingle();
+ if(!data || !$('apply-form')) return;
+ if(!$('experience').value) $('experience').value=data.experience;
+ if(data.has_resume) $('resume-choice').classList.remove('hidden');
+}
+if(client) fillSavedExperience().catch(()=>{ /* The manual application remains available. */ });
 load().catch(()=>{$('job-status').textContent='Unable to load this application right now.'});
 </script></body></html>

@@ -108,7 +108,16 @@ async function loadApplicants(){
  .select('id,opening_id,full_name,email,phone,city,experience,availability,message,review_status,created_at')
  .eq('company_id',user.id).order('created_at',{ascending:false}).limit(100);
  if(error){$('applicants-status').textContent='Hiring dashboard setup required: '+error.message;$('applicants-list').innerHTML='';return}
- applicantRows=data||[];renderApplicants();
+ applicantRows=data||[];
+ if(applicantRows.length){
+  const rows=applicantRows;
+  const attachments=await client.from('application_resumes').select('application_id')
+    .in('application_id',rows.map(row=>row.id));
+  if(rows!==applicantRows)return;
+  const ids=new Set((attachments.data||[]).map(row=>row.application_id));
+  rows.forEach(row=>row.hasResume=ids.has(row.id));
+ }
+ renderApplicants();
 }
 function renderApplicants(){
  const all=applicantRows,filter=$('applicant-filter').value,needle=$('applicant-search').value.trim().toLowerCase();
@@ -127,6 +136,7 @@ function renderApplicants(){
  '<details><summary>View experience and availability</summary>'+
  '<p><strong>City:</strong> '+escapeHTML(a.city)+'</p><p><strong>Experience:</strong> '+escapeHTML(a.experience)+'</p>'+
  '<p><strong>Availability:</strong> '+escapeHTML(a.availability)+'</p>'+
+ (a.hasResume?'<button type="button" data-resume="'+escapeHTML(a.id)+'">Download résumé (PDF)</button>':'')+
  (a.message?'<p><strong>Notes:</strong> '+escapeHTML(a.message)+'</p>':'')+'</details>'+
  '<div class="applicant-actions"><label for="stage-'+escapeHTML(a.id)+'">Hiring stage</label>'+
  '<select id="stage-'+escapeHTML(a.id)+'" data-application-status="'+escapeHTML(a.id)+'">'+options+'</select>'+
@@ -135,6 +145,21 @@ function renderApplicants(){
  }).join(''):'<p class="muted">No applicants match this filter.</p>';
 }
 $('applicants-list').addEventListener('click',async e=>{
+ const download=e.target.closest('[data-resume]');
+ if(download){
+  download.disabled=true;
+  try {
+   const {data,error}=await client.from('application_resumes').select('resume_pdf')
+    .eq('application_id',download.dataset.resume).single();
+   if(error)throw error;
+   const bytes=Uint8Array.from(atob(data.resume_pdf),ch=>ch.charCodeAt(0));
+   const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+   const link=document.createElement('a');link.href=url;link.download='resume.pdf';link.click();
+   setTimeout(()=>URL.revokeObjectURL(url),60000);
+  } catch { $('applicants-status').textContent='Unable to download the résumé. Try again.'; }
+  finally {download.disabled=false;}
+  return;
+ }
  const button=e.target.closest('[data-save-application]');if(!button||company?.status!=='approved'||!user)return;
  const id=button.dataset.saveApplication;
  const dropdown=$('applicants-list').querySelector('[data-application-status="'+id+'"]');
