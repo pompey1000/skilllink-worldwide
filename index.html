@@ -31,6 +31,7 @@ body:not(.portal-worker):not(.portal-customer) .quick-access{display:none}
 body:not(.portal-worker):not(.portal-customer) .hero{padding:28px 0 20px}
 body:not(.portal-worker):not(.portal-customer) .role-entrance{margin-top:0}
 @media(max-width:750px){body:not(.portal-worker):not(.portal-customer) .role-entrance-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.role-entrance-grid strong{font-size:14px}.role-entrance-grid a{padding:12px 8px}.role-entrance-grid span{font-size:12px}}
+a.btn[aria-current="page"]{background:#102c42;color:white;outline:2px solid currentColor;outline-offset:-4px}
 </style></head><body>
 <header><strong>Skill Link <span>Worldwide</span></strong><a class="top-login" href="#account">🔐 Sign In / Sign Up</a><nav><a href="#account" class="profile-link">Account</a><a href="/?view=customer#account" class="profile-link">Customer Dashboard</a><a href="#bookings" class="profile-link">Manage Bookings</a><a href="#my-profile" class="profile-link">👤 My Profile</a><a href="#services">Services</a><a href="/shifts.html">Shift Marketplace</a><a href="/business-contracts.html">Business Contracts</a><a href="#for-businesses">For Businesses</a><a href="#worker-notifications">🔔 Alerts</a><a href="/?view=worker#account">Worker Dashboard</a><a href="#inbox">Messages</a><a href="#directory">Workers</a><a href="#jobs">Requests</a><a href="#how">How it works</a><a href="#faq">FAQ</a></nav></header>
 <main><section class="hero"><div><div class="eyebrow">Built on Love. Connected by Skill.</div><h1>Skill Link.<br>Work that respects people.</h1><p class="lead">Welcome to Skill Link. Find experienced local people when you need help, or share your skills and find work. Your time, your experience, and your well-being matter here.</p><div class="actions"><a class="btn" href="/shifts.html" style="text-decoration:none">Browse Shifts · Pilot</a><a class="btn alt" href="/?view=worker#account" style="text-decoration:none">Worker Account</a><a class="btn alt" href="/?view=customer#account" style="text-decoration:none">Find Help</a></div><p class="muted">Clear prices. Local first.</p><div class="stats"><div><b>Local</b>Community-first</div><div><b>Simple</b>Post your need</div><div><b>Flexible</b>Set your price</div></div></div><div class="hero-art"><div class="symbol">🛠️</div><h2>People helping people.</h2><p>Built around respect, clear communication, and care for the person behind every job.</p><div style="font-size:38px">🔧 ⚡ 🪚 🚗</div></div></section><section class="role-entrance" aria-label="Choose your Skill Link account">
@@ -276,7 +277,7 @@ function toggleChat(){el('chatbox').classList.toggle('hide');el('chatbutton').se
  if(!window.supabase){status.textContent='Sign-in service could not load. Refresh and try again.';return;}
  const client=window.supabase.createClient('https://iiaskaknyfenglihfrpo.supabase.co','sb_publishable_W21KLGIbvYUAQuE4Sgvs9A_pKK5SaWT');db=client;
  function show(session){const user=session?.user;signedout.classList.toggle('hide',!!user||recovering);signedin.classList.toggle('hide',!user||recovering);resetPanel.classList.toggle('hide',!recovering);document.getElementById('account-email').textContent=user?'Signed in as '+user.email:'';activeUser=user||null;document.getElementById('profile-summary').textContent=user?'Signed in as '+user.email+'. Your public work photos appear below. Customers can also see them in the Workers directory.':'Sign in to manage your worker profile and work photos.';render();loadWorkerNotifications();loadInbox();loadBookings();loadWorkerDashboard();loadCustomerDashboard();loadMyPortfolio();loadMyAvatar();initializeCompanyAdmin();if(user&&!recovering)status.textContent='Signed in. You can now save requests or a worker profile.';}
- async function auth(mode){const email=document.getElementById('auth-email').value.trim();const password=document.getElementById('auth-password').value;if(!email||!password){status.textContent='Enter your email and password.';return;}if(password.length<8){status.textContent='Use a password with at least 8 characters.';return;}signup.disabled=signin.disabled=true;status.textContent=mode==='signup'?'Creating your account…':'Signing in…';try{const result=mode==='signup'?await client.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}):await client.auth.signInWithPassword({email,password});if(result.error)throw result.error;if(result.data.session){show(result.data.session);}else{status.textContent='Check your email for a confirmation link, then return here to sign in.';}}catch(err){status.textContent='Unable to '+(mode==='signup'?'create account':'sign in')+': '+(err.message||'Please try again.');}finally{signup.disabled=signin.disabled=false;}}
+ async function auth(mode){const email=document.getElementById('auth-email').value.trim();const password=document.getElementById('auth-password').value;if(!email||!password){status.textContent='Enter your email and password.';return;}if(password.length<8){status.textContent='Use a password with at least 8 characters.';return;}signup.disabled=signin.disabled=true;status.textContent=mode==='signup'?'Creating your account…':'Signing in…';try{const result=mode==='signup'?await client.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}):await client.auth.signInWithPassword({email,password});if(result.error)throw result.error;if(result.data.session){show(result.data.session);}else{status.textContent='Check your email for a confirmation link, then return here to sign in.';}}catch(err){if (mode==='signup' && (err.status===429 || err.code==='over_email_send_rate_limit')) {status.textContent='Too many signup requests. Check your inbox and spam folder for a confirmation email. If none arrives, wait before trying again.';} else status.textContent='Unable to '+(mode==='signup'?'create account':'sign in')+': '+(err.message||'Please try again.');}finally{signup.disabled=signin.disabled=false;}}
  signup.addEventListener('click',()=>auth('signup'));signin.addEventListener('click',()=>auth('signin'));
  document.getElementById('forgot-btn').addEventListener('click',async()=>{const email=document.getElementById('auth-email').value.trim();if(!email){status.textContent='Enter your email address above, then tap Forgot password?';return;}status.textContent='Requesting password-reset email…';try{const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;status.textContent='If this email has an account, a reset link will arrive shortly. Check your inbox and spam folder.';}catch(err){status.textContent='Could not request reset: '+err.message;}});
  document.getElementById('reset-save-btn').addEventListener('click',async()=>{const password=document.getElementById('reset-password').value;if(password.length<8){status.textContent='Choose a password of at least 8 characters.';return;}const button=document.getElementById('reset-save-btn');button.disabled=true;status.textContent='Updating password…';try{const {error}=await client.auth.updateUser({password});if(error)throw error;recovering=false;resetPanel.classList.add('hide');document.getElementById('reset-password').value='';const {data}=await client.auth.getSession();show(data.session);status.textContent='Password updated successfully. You are signed in.';}catch(err){status.textContent='Could not update password: '+err.message;}finally{button.disabled=false;}});
@@ -344,9 +345,23 @@ document.getElementById('business-hiring-form').addEventListener('submit',async 
  if(role!=='worker'&&role!=='customer')return;
  document.body.classList.add('portal-'+role);
  const account=document.getElementById('account');if(!account)return;
- const heading=document.createElement('div');heading.className='portal-heading';
- heading.innerHTML=role==='worker'?'<h2>🛠️ Your Worker Account</h2><p>Sign in to manage your work and profile.</p>':'<h2>👤 Your Customer Account</h2><p>Sign in to view requests, bookings and messages.</p>';
- account.parentNode.insertBefore(heading,account);
+ const worker = role === 'worker';
+ const accountName = worker ? 'Worker Account' : 'Customer Account';
+ account.querySelector('h2').textContent = accountName;
+ account.querySelector('p').textContent = worker
+   ? 'Create a worker account or sign in to manage your work and profile.'
+   : 'Create a customer account or sign in to manage your requests and bookings.';
+ document.getElementById('signup-btn').textContent = worker ? 'Create worker account' : 'Create customer account';
+ for (const link of document.querySelectorAll('a[href="/?view='+role+'#account"]')) {
+   link.setAttribute('aria-current','page');
+   link.addEventListener('click', function(event) {
+     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+     event.preventDefault();
+     account.scrollIntoView();
+     const email = document.getElementById('auth-email');
+     if (email.getClientRects().length) email.focus();
+   });
+ }
  const ids=role==='worker'?['worker-dashboard','start','find-jobs','my-profile','worker-notifications','bookings','inbox']:['customer-dashboard','start','directory','jobs','bookings','inbox'];
  setTab(role==='worker'?'offer':'need');
  const start=document.getElementById('start');
@@ -359,7 +374,7 @@ document.getElementById('business-hiring-form').addEventListener('submit',async 
  for(const id of ids){const el=document.getElementById(id);if(el){anchor.insertAdjacentElement('afterend',el);anchor=el}}
  const keep=new Set(['account',...ids]);
  for(const el of Array.from(document.querySelector('main').children)){
-  if(el===heading||keep.has(el.id))continue;
+  if(keep.has(el.id))continue;
   el.style.display='none';
  }
  document.title=(role==='worker'?'Worker Account':'Customer Account')+' | Skill Link Worldwide';
